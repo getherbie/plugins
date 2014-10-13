@@ -112,8 +112,9 @@ class WidgetsExtension extends \Twig_Extension
 
         if(!$_subtemplateDir) return null;
 
-        $subpageLoader = new Loader\PageLoader($this->app['parser']);
-        $subpage = $this->app['page'] = $subpageLoader->load(dirname($_subtemplateDir).DS.'index.md');
+        $appPage = $this->app['page'];
+        $widgetPageLoader = new Loader\PageLoader($this->app['parser']);
+        $this->app['page'] = $widgetPageLoader->load(dirname($_subtemplateDir).DS.'index.md');
 
         $widgetLoader = new Twig_Loader_Filesystem($_subtemplateDir);
         $twiggedWidget = new Twig_Environment($widgetLoader, [
@@ -125,13 +126,17 @@ class WidgetsExtension extends \Twig_Extension
         if (!$this->app['config']->isEmpty('imagine')) {
             #$twiggedWidget->addExtension(new Twig\ImagineExtension($this->app));
         }
+
 //        $twiggedWidget->addTwigPlugins();
 
-        $ret = strtr($twiggedWidget->render('widget.html', array(
+        $ret = strtr($twiggedWidget->render('index.html', array(
             'abspath' => dirname($_subtemplateDir).'/'
         ) ), array(
             './' => substr(dirname($_subtemplateDir), strlen($this->app['webPath'])).'/'
         ));
+
+        $this->app['page'] = $appPage;
+
         return $ret;
     }
 
