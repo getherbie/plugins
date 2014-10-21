@@ -74,7 +74,7 @@ class FormsExtension extends \Twig_Extension
         $this->basePath = $app['request']->getBasePath() . DS;
         $this->webPath = rtrim(dirname($_SERVER['SCRIPT_FILENAME']), DS);
         $this->pagePath = rtrim($app['config']->get('pages.path').$_SERVER['REQUEST_URI'], DS);
-        $this->cachePath = $app['config']->get('widgets.cachePath', 'cache');
+        $this->cachePath = $app['config']->get('forms.cachePath', 'cache');
     }
 
     /**
@@ -138,10 +138,16 @@ class FormsExtension extends \Twig_Extension
         $translator->addResource('xlf', VENDOR_VALIDATOR_DIR.DS.'Resources'.DS.'translations'.DS.'validators.de.xlf', 'en', 'validators');
 
         // Set up Twig
-        $twig = new Twig_Environment(new Twig_Loader_Filesystem(array(
-            VIEWS_DIR,
-            VENDOR_TWIG_BRIDGE_DIR.DS.'Resources'.DS.'views'.DS.'Form',
-        )));
+        $twig = new Twig_Environment(
+            new Twig_Loader_Filesystem(array(
+                    VIEWS_DIR,
+                    VENDOR_TWIG_BRIDGE_DIR.DS.'Resources'.DS.'views'.DS.'Form',
+            )),
+            [
+                'debug' => $this->app['config']->get('twig.debug'),
+                'cache' => $this->app['config']->get('twig.cache')
+            ]
+        );
         $formEngine = new TwigRendererEngine(array(DEFAULT_FORM_THEME));
         $formEngine->setEnvironment($twig);
         $twig->addExtension(new TranslationExtension($translator));
@@ -179,7 +185,7 @@ class FormsExtension extends \Twig_Extension
             if ($form->isValid()) {
 //                var_dump('VALID', $form->getData());
 //                var_dump($this->absUrl($this->getRoute().'/'.'Webdesign'));
-                return $this->renderWidget('Danke');
+                return $this->app->renderContentSegment('Danke');
             }
         }
 
