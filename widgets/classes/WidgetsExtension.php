@@ -118,8 +118,8 @@ class WidgetsExtension extends \Twig_Extension
 
         $widgetLoader = new Twig_Loader_Filesystem($_subtemplateDir);
         $twiggedWidget = new Twig_Environment($widgetLoader, [
-            'debug' => false,
-            'cache' => false
+            'debug' => $this->app['config']->get('twig.debug'),
+            'cache' => $this->app['config']->get('twig.cache')
         ]);
 
         $twiggedWidget->addExtension(new Twig\HerbieExtension($this->app));
