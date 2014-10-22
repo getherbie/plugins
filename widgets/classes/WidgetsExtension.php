@@ -104,7 +104,7 @@ class WidgetsExtension extends \Twig_Extension
         $_widgetDir = '_'.strtolower($widgetName);
 
         if(is_dir($_curDir.DS.$_widgetDir)) {
-            $_subtemplateDir = $_curDir.DS.$_widgetDir.DS.'.layouts';
+            $_subtemplateDir = $_curDir.DS.$_widgetDir.DS.'.layout';
             if(!is_dir($_subtemplateDir)){
                 $_subtemplateDir = false;
             }
