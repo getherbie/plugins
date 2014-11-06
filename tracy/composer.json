@@ -1,0 +1,16 @@
+{
+    "name": "nzwbr/herbie-tracy",
+    "homepage": "http://www.netzweberei.de",
+    "description": "Herbie Plugin Tracy",
+    "keywords": ["herbie", "plugin", "tracy"],
+    "type": "herbie-plugin",
+    "require": {
+        "getherbie/herbie": "dev-master",
+        "tracy/tracy": "~2.3@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "herbie\\plugin\\tracy\\": ""
+        }
+    } 
+}

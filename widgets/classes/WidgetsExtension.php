@@ -104,7 +104,7 @@ class WidgetsExtension extends \Twig_Extension
         $_widgetDir = '_'.strtolower($widgetName);
 
         if(is_dir($_curDir.DS.$_widgetDir)) {
-            $_subtemplateDir = $_curDir.DS.$_widgetDir.DS.'.layouts';
+            $_subtemplateDir = $_curDir.DS.$_widgetDir.DS.'.layout';
             if(!is_dir($_subtemplateDir)){
                 $_subtemplateDir = false;
             }
@@ -118,8 +118,8 @@ class WidgetsExtension extends \Twig_Extension
 
         $widgetLoader = new Twig_Loader_Filesystem($_subtemplateDir);
         $twiggedWidget = new Twig_Environment($widgetLoader, [
-            'debug' => false,
-            'cache' => false
+            'debug' => $this->app['config']->get('twig.debug'),
+            'cache' => $this->app['config']->get('twig.cache')
         ]);
 
         $twiggedWidget->addExtension(new Twig\HerbieExtension($this->app));
