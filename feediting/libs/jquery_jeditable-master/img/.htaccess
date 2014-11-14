@@ -1,0 +1,6 @@
+
+# Allow access to widget files
+<Files ~ "\.(gif)">
+ allow from all
+</Files>
+
