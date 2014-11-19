@@ -15,12 +15,27 @@ class FeeditingPlugin extends \Herbie\Plugin
 {
     private $config = array();
 
+    private $authenticated = false;
+
     private $app = null;
 
-    // @idea: implement a jeditable-UI
-    // @todo:
+    public function __construct()
+    {
+        // TODO: Implement some kind of authentication!
+        $this->authenticated = true;
+    }
+
+    public function __call($funcname, $args)
+    {
+        if($this->authenticated === true){
+            return $this->{$funcname}($args[0]);
+        } else {
+            return;
+        }
+    }
+
     // call document.ready-function in footer
-    public function onOutputGenerated(\Herbie\Event $event )
+    protected function onOutputGenerated(\Herbie\Event $event )
     {
 
         $_app          = $event->offsetGet('app');
@@ -39,15 +54,15 @@ class FeeditingPlugin extends \Herbie\Plugin
     }
 
     // fetch markdown-contents for jeditable
-    public function onPageLoaded(\Herbie\Event $event )
+    protected function onPageLoaded(\Herbie\Event $event )
     {
         $_page = $event->offsetGet('page');
         $_segments = $_page->getSegments();
         $_content = array();
 
         foreach($_segments as $seguid => $content){
-            $identified = $this->identifyParagraphs($content, $seguid);
-            $_segments[$seguid] = implode($identified['eol'], $identified['paragraphs']);
+            $identified = $this->getParagraphs($_page->getFormat(), $content, $seguid);
+            $_segments[$seguid] = implode($identified['eop'], $identified['paragraphs']);
             $_content[$seguid] = array(
                 'paragraphs' => $identified['paragraphs'],
                 'format' => $identified['format']
@@ -83,12 +98,14 @@ class FeeditingPlugin extends \Herbie\Plugin
     /**
      * @param string $content
      * @param int $uid
-     * @return array('paragraphs', 'eol', 'format')
+     * @return array('paragraphs', 'eop', 'format')
      */
-    private function identifyParagraphs($content, $uid)
+    private function getParagraphs($format, $content, $uid)
     {
-            // currently only (twitter-bootstrap)markdown supported
-        return $this->identifyMarkdown($content, $uid);
+        // currently only (twitter-bootstrap)markdown supported
+        $ret = $this->{'identify'.ucfirst($format)}($content, $uid);
+//        var_dump($ret);
+        return $ret;
     }
 
     /**
@@ -101,39 +118,65 @@ class FeeditingPlugin extends \Herbie\Plugin
         $ret = array();
         $format = 'markdown';
         $eol = "\n";
+        $eop = "\n";
         $class = 'editable_'.$format;
+        $openBlock = true;
+        $closeBlock = false;
+        $blockId = 0;
 
         $this->setJSEditableConfig($format, $class);
 
-        $paragraphs = explode($eol, $content);
-        foreach($paragraphs as $id => $paragraph) {
+//        var_dump($content);
+
+        $lines = explode($eop, $content);
+        foreach($lines as $id => $line) {
+
+//            var_dump($line);
 
                 // don't edit bootstrap-markdown:
                 // eg content like "-- row 4,4,4 --"
-            if(strpos($paragraph,'-- row ')!==false) {
-                $ret[$id] = $paragraph;
+            if(strpos($line,'-- row ')!==false) {
+                $ret[$id] = $line;
+                if($blockId) {
+                    $ret[$blockId] .= $eol.'<!-- ###'.$class.'### Stop -->'.$eol;
+                    $blockId = 0;
+                    $openBlock = true;
+                }
                 continue;
             }
 
-            switch($paragraph){
+            switch($line){
 
                     // don't edit bootstrap-markdown...
                 case "----":
                 case "-- end --":
                     // ...and blank lines
                 case "":
-                    $ret[$format.'-'.$uid.'#'.$id] = $paragraph;
+                    $ret[$id] = $line;
+                    if($blockId) {
+                        $ret[$blockId] .= $eol.'<!-- ###'.$class.'### Stop -->'.$eol;
+                        $blockId = 0;
+                        $openBlock = true;
+                    }
                     break;
 
                 default:
-                    $ret[$id] =
-                        $eol.'<!-- ###'.$class.'-'.$id.'### Start -->'.$eol
-                        .$paragraph
-                        .$eol.'<!-- ###'.$class.'### Stop -->'.$eol;
+                    if($openBlock)
+                    {
+                        $blockId = $id;
+                        $ret[$blockId] = $eol.'<!-- ###'.$class.'-'.$id.'### Start -->'.$eol.$line.$eol;
+                        $openBlock = false;
+                    } else {
+                        $ret[$blockId] .= $line.$eol;
+                    }
+//                    $ret[$id] =
+//                        $eol.'<!-- ###'.$class.'-'.$id.'### Start -->'.$eol
+//                        .$line
+//                        .$eol.'<!-- ###'.$class.'### Stop -->'.$eol;
 
-                    if(!isset($this->marks['<!-- ###'.$class.'-'.$id.'### Start -->'])) {
-                        $this->marks['<!-- ###'.$class.'-'.$id.'### Start -->'] = '<div class="'.$class.'" id="'.$format.'-'.$uid.'#'.$id.'">';
-                        $this->nullmarks['<!-- ###'.$class.'-'.$id.'### Start -->'] = '';
+                    if(!isset($this->marks['<!-- ###'.$class.'-'.$blockId.'### Start -->'])) {
+                        $this->marks['<!-- ###'.$class.'-'.$blockId.'### Start -->'] = '<div class="'.$class.'" id="'.$format.'-'.$uid.'#'.$blockId.'">';
+                        $this->nullmarks['<!-- ###'.$class.'-'.$blockId.'### Start -->'] = '';
                     }
                     if(!isset($this->marks['<!-- ###'.$class.'### Stop -->'])) {
                         $this->marks['<!-- ###'.$class.'### Stop -->'] = '</div>';
@@ -141,9 +184,12 @@ class FeeditingPlugin extends \Herbie\Plugin
                     }
             }
         }
+
+//        var_dump($ret);
+
         return array(
             'paragraphs' => $ret,
-            'eol' => $eol,
+            'eop' => $eop,
             'format' => $format
         );
     }
