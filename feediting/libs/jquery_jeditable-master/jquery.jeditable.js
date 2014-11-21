@@ -346,7 +346,7 @@
                                       if (ajaxoptions.dataType == 'html') {
                                           if(ajaxoptions.replace == 'with'){
                                               $(self).replaceWith(result);
-                                              makeEditable();
+                                              makeJeditable();
                                           }
                                           else
                                               $(self).html(result);
