@@ -344,7 +344,12 @@
                                   url     : settings.target,
                                   success : function(result, status) {
                                       if (ajaxoptions.dataType == 'html') {
-                                        $(self).html(result);
+                                          if(ajaxoptions.replace == 'with'){
+                                              $(self).replaceWith(result);
+                                              makeEditable();
+                                          }
+                                          else
+                                              $(self).html(result);
                                       }
                                       self.editing = false;
                                       callback.apply(self, [result, settings]);

@@ -23,6 +23,9 @@ class FeeditingPlugin extends \Herbie\Plugin
     {
         // TODO: Implement some kind of authentication!
         $this->authenticated = true;
+
+        // set defaults
+        $this->config['contentBlockDimension'] = 100;
     }
 
     public function __call($funcname, $args)
@@ -60,12 +63,12 @@ class FeeditingPlugin extends \Herbie\Plugin
         $_segments = $_page->getSegments();
         $_content = array();
 
-        foreach($_segments as $seguid => $content){
-            $identified = $this->getParagraphs($_page->getFormat(), $content, $seguid);
-            $_segments[$seguid] = implode($identified['eop'], $identified['paragraphs']);
-            $_content[$seguid] = array(
-                'paragraphs' => $identified['paragraphs'],
-                'format' => $identified['format']
+        foreach($_segments as $segmentid => $content){
+            $content = $this->getContentBlocks($_page->getFormat(), $content, $segmentid);
+            $_segments[$segmentid] = implode($content['eob'], $content['blocks']);
+            $_content[$segmentid] = array(
+                'blocks' => $content['blocks'],
+                'format' => $content['format']
             );
         };
 
@@ -74,9 +77,26 @@ class FeeditingPlugin extends \Herbie\Plugin
             case 'load':
                 list($contenturi, $elemid) = explode('#', $_REQUEST['id']);
                 list($contenttype, $contentkey) = explode('-', $contenturi);
-                if($request = $_content[$contentkey]['paragraphs'][$elemid]){
-                    echo(trim(strtr($request, $this->nullmarks)));
+
+                    // calculate pointer
+                $surplus = $elemid % $this->config['contentBlockDimension'];
+                $baseId = $elemid - $surplus;
+
+                // move pointer to the requested element
+                while (
+                    key($_content[$contentkey]['blocks']) != $baseId
+                    && current($_content[$contentkey]['blocks']) !== false
+                ){
+                    $request = next($_content[$contentkey]['blocks']);
                 }
+
+                    // maybe new jeditable-elements in the dom and yet no page-reload?
+                $ff = $this->crossfoot($surplus);
+                for($i = 0; $i < $ff; $i++){
+                    $request = next($_content[$contentkey]['blocks']);
+                }
+
+                echo(trim(strtr($request, $this->nullmarks)));
                 die();
 
             case 'save':
@@ -84,9 +104,21 @@ class FeeditingPlugin extends \Herbie\Plugin
                     $this->app = $event->offsetGet('app');
                     list($contenturi, $elemid) = explode('#', $_POST['id']);
                     list($contenttype, $contentkey) = explode('-', $contenturi);
+
                     // save to md-file
+                    // ...
+
+                    // calculate block-dimension
+                    $contentBlockDimension = ($elemid % $this->config['contentBlockDimension']==0) ? 10 : 1;
+
+                    // "blockify" submitted content
+                    $jeditables = $this->getContentBlocks($contenttype, $_POST['value'], $contentkey, $contentBlockDimension, $elemid);
+                    if( count($jeditables['blocks']) > 1 ){
+//                        die('<script>location.reload(true)</script>');
+                    }
+                    $jeditables = implode($jeditables['eob'], $jeditables['blocks']);
                     // render contents
-                    echo $this->renderContent($_POST['value'], $contenttype);
+                    echo strtr($this->renderContent($jeditables, $contenttype), $this->marks);
                 }
                 die();
 
@@ -98,14 +130,12 @@ class FeeditingPlugin extends \Herbie\Plugin
     /**
      * @param string $content
      * @param int $uid
-     * @return array('paragraphs', 'eop', 'format')
+     * @return array('blocks', 'eop', 'format')
      */
-    private function getParagraphs($format, $content, $uid)
+    private function getContentBlocks($format, $content, $contentid, $contentBlockDimension = 100, $dimensionOffset = 0)
     {
         // currently only (twitter-bootstrap)markdown supported
-        $ret = $this->{'identify'.ucfirst($format)}($content, $uid);
-//        var_dump($ret);
-        return $ret;
+        return $this->{'identify'.ucfirst($format)}($content, $contentid, $contentBlockDimension, $dimensionOffset);
     }
 
     /**
@@ -113,37 +143,23 @@ class FeeditingPlugin extends \Herbie\Plugin
      * @param $uid
      * @return array() numbered paragraphs
      */
-    private function identifyMarkdown($content, $uid)
+    private function identifyMarkdown($content, $contentid, $contentBlockDimension = 100, $dimensionOffset = 0)
     {
         $ret = array();
         $format = 'markdown';
         $eol = "\n";
-        $eop = "\n";
+        $eob = "\n"; // end of block
         $class = 'editable_'.$format;
         $openBlock = true;
-        $closeBlock = false;
         $blockId = 0;
 
         $this->setJSEditableConfig($format, $class);
 
-//        var_dump($content);
-
-        $lines = explode($eop, $content);
-        foreach($lines as $id => $line) {
-
-//            var_dump($line);
-
-                // don't edit bootstrap-markdown:
-                // eg content like "-- row 4,4,4 --"
-            if(strpos($line,'-- row ')!==false) {
-                $ret[$id] = $line;
-                if($blockId) {
-                    $ret[$blockId] .= $eol.'<!-- ###'.$class.'### Stop -->'.$eol;
-                    $blockId = 0;
-                    $openBlock = true;
-                }
-                continue;
-            }
+        $lines = explode($eol, $content);
+        foreach($lines as $ctr => $line)
+        {
+                // index + 100 so we have enough "space" to create new blocks "on-the-fly" when editing the page
+            $id = $ctr * $contentBlockDimension + $dimensionOffset;
 
             switch($line){
 
@@ -153,7 +169,8 @@ class FeeditingPlugin extends \Herbie\Plugin
                     // ...and blank lines
                 case "":
                     $ret[$id] = $line;
-                    if($blockId) {
+                    if($blockId)
+                    {
                         $ret[$blockId] .= $eol.'<!-- ###'.$class.'### Stop -->'.$eol;
                         $blockId = 0;
                         $openBlock = true;
@@ -161,35 +178,62 @@ class FeeditingPlugin extends \Herbie\Plugin
                     break;
 
                 default:
+
+                    // don't edit bootstrap-markdown (cont.):
+                    // eg content like "-- row n1,n2,n3,..,n12 --"
+                    if(substr($line, 0, strlen('-- row ')) == '-- row ')
+                    {
+                        $ret[$id] = $line;
+                        if($blockId)
+                        {
+                            $ret[$blockId] .= $eol.'<!-- ###'.$class.'### Stop -->'.$eol;
+                            $blockId = 0;
+                            $openBlock = true;
+                        }
+                        continue;
+                    }
+
+                    // group some elements in their own block, eg header:
+                    if(substr($line, 0, strlen('#')) == '#')
+                    {
+                        $ret[$id] = $line;
+                        if($blockId)
+                        {
+                            $ret[$blockId] .= $eol.'<!-- ###'.$class.'### Stop -->'.$eol;
+                            $blockId = 0;
+                            $openBlock = true;
+                        }
+                    }
+
                     if($openBlock)
                     {
                         $blockId = $id;
-                        $ret[$blockId] = $eol.'<!-- ###'.$class.'-'.$id.'### Start -->'.$eol.$line.$eol;
-                        $openBlock = false;
-                    } else {
+                        $ret[$blockId] = $eol.'<!-- ###'.$class.'-'.$id.'### Start -->'.$eol;
                         $ret[$blockId] .= $line.$eol;
+                        $openBlock = false;
                     }
-//                    $ret[$id] =
-//                        $eol.'<!-- ###'.$class.'-'.$id.'### Start -->'.$eol
-//                        .$line
-//                        .$eol.'<!-- ###'.$class.'### Stop -->'.$eol;
+                    else
+                    {
+                        $ret[$blockId] .= $eol.$line.$eol;
+                    }
 
-                    if(!isset($this->marks['<!-- ###'.$class.'-'.$blockId.'### Start -->'])) {
-                        $this->marks['<!-- ###'.$class.'-'.$blockId.'### Start -->'] = '<div class="'.$class.'" id="'.$format.'-'.$uid.'#'.$blockId.'">';
+                    if(!isset($this->marks['<!-- ###'.$class.'-'.$blockId.'### Start -->']))
+                    {
+                        $this->marks['<!-- ###'.$class.'-'.$blockId.'### Start -->'] = '<div class="'.$class.'" id="'.$format.'-'.$contentid.'#'.$blockId.'">';
                         $this->nullmarks['<!-- ###'.$class.'-'.$blockId.'### Start -->'] = '';
                     }
-                    if(!isset($this->marks['<!-- ###'.$class.'### Stop -->'])) {
+
+                    if(!isset($this->marks['<!-- ###'.$class.'### Stop -->']))
+                    {
                         $this->marks['<!-- ###'.$class.'### Stop -->'] = '</div>';
                         $this->nullmarks['<!-- ###'.$class.'### Stop -->'] = '';
                     }
             }
         }
 
-//        var_dump($ret);
-
         return array(
-            'paragraphs' => $ret,
-            'eop' => $eop,
+            'blocks' => $ret,
+            'eob' => $eob,
             'format' => $format
         );
     }
@@ -212,15 +256,22 @@ class FeeditingPlugin extends \Herbie\Plugin
 
             'identifier' => $class,
             'config'     => '
-$(function() {
+function makeEditable() {
     $(".'.$class.'").editable("?cmd=save&renderer='.$format.'", {
         indicator : "<img src=\'###plugin_path###libs/jquery_jeditable-master/img/indicator.gif\'>",
         loadurl   : "?cmd=load&renderer='.$format.'",
         type      : "'.$type.'",
         submit    : "OK",
         cancel    : "Cancel",
-        tooltip   : "Click to edit..."
+        tooltip   : "Click to edit...",
+        ajaxoptions : {
+            replace : "with"
+        }
     });
+};
+
+$(document).ready(function(){
+    makeEditable();
 });
 '
         );
@@ -239,5 +290,15 @@ $(function() {
 
         $formatter = \Herbie\Formatter\FormatterFactory::create($format);
         return $formatter->transform($twigged);
+    }
+
+    private function crossfoot ( $digits )
+    {
+        $strDigits = ( string ) $digits;
+        for( $intCrossfoot = $i = 0; $i < strlen ( $strDigits ); $i++ ) {
+            $intCrossfoot += $strDigits{$i};
+        }
+
+        return $intCrossfoot;
     }
 }
