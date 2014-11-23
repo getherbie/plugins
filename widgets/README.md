@@ -13,7 +13,7 @@ Widgets werden als Unterordner innerhalb von 'pages' angelegt, z.B. ein Zweispal
         |   ├── index.md        # Widget-Inhalte
         |   ├── image.jpg       # optionale Dateien zur Verwendung im Subtemplate
         |   └── .layout
-        |       └── widget.html # Twig-Subtemplate
+        |       └── index.html  # Twig-Subtemplate
         └── 02-seite.md
 
 

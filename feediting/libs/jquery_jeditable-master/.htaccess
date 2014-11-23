@@ -1,0 +1,6 @@
+
+# Allow access to widget files
+<Files ~ "\.(js)">
+ allow from all
+</Files>
+

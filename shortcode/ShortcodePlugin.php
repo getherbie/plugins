@@ -18,7 +18,12 @@ class ShortcodePlugin extends \Herbie\Plugin
     public function onContentSegmentLoaded(\Herbie\Event $event)
     {
         $tags = $event['app']['config']->get('plugins.shortcode', []);
+
+        foreach($tags as $tag => $_callable){
+            $tags[$tag] = create_function('$atts, $content', $_callable.';');
+        }
         $shortcode = new Shortcode($tags);
+
         $event['segment'] = $shortcode->parse($event['segment']);
     }
 }
