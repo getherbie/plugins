@@ -345,7 +345,10 @@
                                   success : function(result, status) {
                                       if (ajaxoptions.dataType == 'html') {
                                           if(ajaxoptions.replace == 'with'){
-                                              $(self).replaceWith(result);
+                                              if(ajaxoptions.segmentid)
+                                                  $('.' + ajaxoptions.segmentid ).replaceWith(result);
+                                              else
+                                                $(self).replaceWith(result);
                                               makeJeditable();
                                           }
                                           else
