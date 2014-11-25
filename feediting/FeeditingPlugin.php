@@ -147,10 +147,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     ;
 
                     // render jeditable contents
-                    die(strtr(
-                        $this->renderJeditableContent($jeditable_segment, $contenttype),
-                        $this->replace_pairs
-                    ));
+                    die($this->renderJeditableContent($jeditable_segment, $contenttype));
                 }
                 break;
 
@@ -189,7 +186,7 @@ class FeeditingPlugin extends \Herbie\Plugin
      */
     private function getContentBlocks($format, $content, $contentid, $contentBlockDimension = 100, $dimensionOffset = 0)
     {
-            // currently only (twitter-bootstrap)markdown supported
+            // currently only (twitter-bootstrap)markdown supported!
         return $this->{'identify'.ucfirst($format).'Blocks'}($content, $contentid, $contentBlockDimension, $dimensionOffset);
     }
 
@@ -395,7 +392,9 @@ $(document).ready(function(){
         $twigged = $this->app['twig']->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
 
         $formatter = \Herbie\Formatter\FormatterFactory::create($format);
-        return $formatter->transform($twigged);
+        $ret = strtr($formatter->transform($twigged), $this->replace_pairs);
+
+        return $ret;
     }
 
     private function defineLineFeed($format, $eol)
