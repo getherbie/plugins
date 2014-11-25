@@ -83,7 +83,11 @@ class FeeditingPlugin extends \Herbie\Plugin
                 die(trim($this->renderRawContent($requestedBlock, $contenttype)));
 
             case 'save':
-                if($_POST && $_POST['value'] && $_POST['id']) {
+                if(
+                    $_POST
+//                    && $_POST['value'] // prevents removing whole blocks!
+                    && $_POST['id']
+                ) {
 
                     list($contenturi, $elemid)      = explode('#', str_replace($this->config['jeditable_prefix'], '', $_POST['id']));
                     list($contenttype, $contentkey) = explode('-', $contenturi);
@@ -186,8 +190,33 @@ class FeeditingPlugin extends \Herbie\Plugin
      */
     private function getContentBlocks($format, $content, $contentid, $contentBlockDimension = 100, $dimensionOffset = 0)
     {
+        $ret = [];
+
             // currently only (twitter-bootstrap)markdown supported!
-        return $this->{'identify'.ucfirst($format).'Blocks'}($content, $contentid, $contentBlockDimension, $dimensionOffset);
+        $ret = $this->{'identify'.ucfirst($format).'Blocks'}($content, $contentid, $contentBlockDimension, $dimensionOffset);
+
+            // strip empty blocks
+        $lastBlockUid = 0;
+        $beforeLastBlockUid = 0;
+        foreach($ret['blocks'] as $blockUid => $blockContents)
+        {
+            if(
+                $lastBlockUid
+                && $beforeLastBlockUid
+                && $blockContents == PHP_EOL
+                && $stripped[$lastBlockUid] == PHP_EOL
+//                && $stripped[$beforeLastBlockUid] == PHP_EOL
+            )
+                continue;
+            else
+                $stripped[$blockUid] = $blockContents;
+
+            $beforeLastBlockUid = $lastBlockUid;
+            $lastBlockUid       = $blockUid;
+        }
+        $ret['blocks'] = $stripped;
+
+        return $ret;
     }
 
     /**
