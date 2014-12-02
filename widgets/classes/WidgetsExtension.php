@@ -21,7 +21,6 @@ use Twig_Environment;
 use Twig_Extension_Debug;
 use Twig_Loader_Chain;
 use Twig_Loader_Filesystem;
-use Twig_Loader_String;
     
 class WidgetsExtension extends \Twig_Extension
 {
@@ -98,9 +97,12 @@ class WidgetsExtension extends \Twig_Extension
 
     public function renderWidget($widgetName) {
 
-        # Enable configuration of hidden custom-template-containers in the pagetree
+        $alias = $this->app['alias'];
+        $twig  = $this->app['twig'];
+        $path  = $this->app['menu']->getItem($this->app['route'])->getPath();
+
         $_subtemplateDir = false;
-        $_curDir = dirname($this->app['page']->path);
+        $_curDir = dirname($alias->get($path));
         $_widgetDir = '_'.strtolower($widgetName);
 
         if(is_dir($_curDir.DS.$_widgetDir)) {
@@ -109,35 +111,30 @@ class WidgetsExtension extends \Twig_Extension
                 $_subtemplateDir = false;
             }
         }
-
         if(!$_subtemplateDir) return null;
 
-        $appPage = $this->app['page'];
-        $widgetPageLoader = new Loader\PageLoader($this->app['parser']);
-        $this->app['page'] = $widgetPageLoader->load(dirname($_subtemplateDir).DS.'index.md');
+        $pageLoader = $twig->environment->getLoader();
+        $pageData = $this->app['page']->toArray();
 
         $widgetLoader = new Twig_Loader_Filesystem($_subtemplateDir);
-        $twiggedWidget = new Twig_Environment($widgetLoader, [
-            'debug' => $this->app['config']->get('twig.debug'),
-            'cache' => $this->app['config']->get('twig.cache')
-        ]);
+        $widgetPage = new \Herbie\Loader\PageLoader($alias);
+        $widgetPath = dirname($path).DS.$_widgetDir.DS.'index.md';
+        $widgetData = $widgetPage->load($widgetPath);
 
-        $twiggedWidget->addExtension(new Twig\HerbieExtension($this->app));
-        if (!$this->app['config']->isEmpty('imagine')) {
-            #$twiggedWidget->addExtension(new Twig\ImagineExtension($this->app));
-        }
-
-//        $twiggedWidget->addTwigPlugins();
-
-        $ret = strtr($twiggedWidget->render('index.html', array(
+        $twig->environment->setLoader($widgetLoader);
+        $this->app['page']->setData($widgetData['data']);
+        $this->app['page']->setSegments($widgetData['segments']);
+        $twiggedWidget = strtr($twig->render('index.html', array(
             'abspath' => dirname($_subtemplateDir).'/'
         ) ), array(
             './' => substr(dirname($_subtemplateDir), strlen($this->app['webPath'])).'/'
         ));
 
-        $this->app['page'] = $appPage;
+        $twig->environment->setLoader($pageLoader);
+        $this->app['page']->setData($pageData['data']);
+        $this->app['page']->setSegments($pageData['segments']);
 
-        return $ret;
+        return $twiggedWidget;
     }
 
 }
