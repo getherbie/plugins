@@ -21,7 +21,6 @@ use Twig_Environment;
 use Twig_Extension_Debug;
 use Twig_Loader_Chain;
 use Twig_Loader_Filesystem;
-use Twig_Loader_String;
 use Symfony\Component\Validator\Validation;
 use Symfony\Bridge\Twig\Form\TwigRendererEngine;
 use Symfony\Component\Form\Forms;
@@ -110,8 +109,15 @@ class FormsExtension extends \Twig_Extension
     }
 
     public function renderForm($form) {
-        if(!$this->app['page']->data[$form]) return;
-        else $defForm = $this->app['page']->data[$form];
+
+        $alias = $this->app['alias'];
+        $path  = $this->app['menu']->getItem($this->app['route'])->getPath();
+
+        $formsPage = new \Herbie\Loader\PageLoader($alias);
+        $formsData = $formsPage->load($path);
+
+        if(!$formsData['data'][$form]) return;
+        else $defForm = $formsData['data'][$form];
 
         // Overwrite this with your own secret
         if(!defined('CSRF_SECRET_'.$form)) define('CSRF_SECRET_'.$form, 'c2ioeEU1n48QF2WsHGWd2HmiuUUT6dxr');
@@ -189,9 +195,11 @@ class FormsExtension extends \Twig_Extension
             }
         }
 
-        return $twig->render('form.html.twig', array(
+        $ret = $twig->render('form.html.twig', array(
             'form' => $form->createView(),
         ));
+
+        return $ret;
     }
 
 }
