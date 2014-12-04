@@ -154,14 +154,19 @@ class FeeditingPlugin extends \Herbie\Plugin
                     ;
 
                     // render jeditable contents
-                    die($this->renderJeditableContent($jeditable_segment, $contenttype));
+                    $_page->setSegments(array(
+                        $currsegmentid => $this->renderJeditableContent($jeditable_segment, $contenttype)
+                    ));
+                    die($this->app->renderContentSegment($currsegmentid));
                 }
                 break;
 
             default:
+
                 foreach($_segments as $id => $_segment){
                     $_segments[$id] = $this->renderJeditableContent($_segment, 'markdown');
                 }
+
                 $_page->setSegments($_segments);
         }
     }
