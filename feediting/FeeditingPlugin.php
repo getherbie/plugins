@@ -11,11 +11,13 @@
 
 namespace herbie\plugin\feediting;
 
+use Twig_Loader_String;
+
 class FeeditingPlugin extends \Herbie\Plugin
 {
     private $config = [];
 
-    private $app = null;
+    protected $app = null;
 
     private $authenticated = false;
 
@@ -48,13 +50,16 @@ class FeeditingPlugin extends \Herbie\Plugin
     {
         $this->app = $event->offsetGet('app');
 
+        // reload page without twig
         $_page = $event->offsetGet('page');
+        $_page->setLoader(new \Herbie\Loader\PageLoader($this->app['alias']));
+        $_page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
         $_segments = $_page->getSegments();
         $_content = array();
 
         foreach($_segments as $segmentid => $content)
         {
-            $contentblocks          = $this->getContentBlocks($_page->getFormat(), $content, $segmentid);
+            $contentblocks          = $this->getContentBlocks($_page->format, $content, $segmentid);
             $_segments[$segmentid]  = implode($contentblocks['eob'], $contentblocks['blocks']);
             $_content[$segmentid]   = array(
                 'blocks' => $contentblocks['blocks'],
@@ -64,7 +69,8 @@ class FeeditingPlugin extends \Herbie\Plugin
             unset($contentblocks);
         };
 
-        switch(@$_REQUEST['cmd'])
+        $cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
+        switch($cmd)
         {
             case 'load':
                 list($contenturi, $elemid) = explode('#', $_REQUEST['id']);
@@ -389,7 +395,10 @@ $(document).ready(function(){
      */
     private function renderJeditableContent( $content, $format )
     {
-        $twigged = $this->app['twig']->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
+        $herbieLoader = $this->app['twig']->environment->getLoader();
+        $this->app['twig']->environment->setLoader(new Twig_Loader_String());
+        $twigged = $this->app['twig']->environment->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
+        $this->app['twig']->environment->setLoader($herbieLoader);
 
         $formatter = \Herbie\Formatter\FormatterFactory::create($format);
         $ret = strtr($formatter->transform($twigged), $this->replace_pairs);
