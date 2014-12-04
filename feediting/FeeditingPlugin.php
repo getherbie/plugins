@@ -11,11 +11,13 @@
 
 namespace herbie\plugin\feediting;
 
+use Twig_Loader_String;
+
 class FeeditingPlugin extends \Herbie\Plugin
 {
     private $config = [];
 
-    private $app = null;
+    protected $app = null;
 
     private $authenticated = false;
 
@@ -47,14 +49,19 @@ class FeeditingPlugin extends \Herbie\Plugin
     protected function onPageLoaded(\Herbie\Event $event )
     {
         $this->app = $event->offsetGet('app');
+        $alias = $this->app['alias'];
 
         $_page = $event->offsetGet('page');
+        $_page->setLoader(new \Herbie\Loader\PageLoader($alias));
+        $_path = $alias->get($this->app['menu']->getItem($this->app['route'])->getPath());
+        $_page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
         $_segments = $_page->getSegments();
         $_content = array();
+        $_cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
 
         foreach($_segments as $segmentid => $content)
         {
-            $contentblocks          = $this->getContentBlocks($_page->getFormat(), $content, $segmentid);
+            $contentblocks          = $this->getContentBlocks($_page->format, $content, $segmentid);
             $_segments[$segmentid]  = implode($contentblocks['eob'], $contentblocks['blocks']);
             $_content[$segmentid]   = array(
                 'blocks' => $contentblocks['blocks'],
@@ -64,13 +71,11 @@ class FeeditingPlugin extends \Herbie\Plugin
             unset($contentblocks);
         };
 
-        switch(@$_REQUEST['cmd'])
+        switch($_cmd)
         {
             case 'load':
                 list($contenturi, $elemid) = explode('#', $_REQUEST['id']);
                 list($contenttype, $contentkey) = explode('-', $contenturi);
-
-//                var_dump($_content[$contentkey]['blocks']);
 
                 // move pointer to the requested element
                 while (
@@ -94,7 +99,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     $currsegmentid                  = $elemid % $this->config['contentBlockDimension'];
 
                     // read page's header
-                    $fh = fopen($_page->getPath(), 'r');
+                    $fh = fopen($_path, 'r');
                     if($fh) {
                         $currline = 0;
                         $fheader = '';
@@ -118,7 +123,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                         // TODO: Sanitize input, store only valid $contenttype!
                         $_content[$currsegmentid]['blocks'][$elemid] = (string) $_POST['value'].$_content[$currsegmentid]['eob'];
 
-                        $fh = fopen($_page->getPath(), 'w');
+                        $fh = fopen($_path, 'w');
                         fputs($fh, $fheader);
                         foreach($_content as $fsegment => $fcontent){
                             if( $fsegment > 0 ) {
@@ -132,9 +137,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     }
 
                     // reload page after saving
-                    $menuItem   = $this->app['urlMatcher']->match($this->app['route']);
-                    $pageLoader = new \Herbie\Loader\PageLoader();
-                    $_page      = $pageLoader->load($menuItem->getPath());
+                    $_page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
                     $_segments  = $_page->getSegments();
 
                     // "blockify" reloaded content
@@ -418,7 +421,10 @@ $(document).ready(function(){
      */
     private function renderJeditableContent( $content, $format )
     {
-        $twigged = $this->app['twig']->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
+        $herbieLoader = $this->app['twig']->environment->getLoader();
+        $this->app['twig']->environment->setLoader(new Twig_Loader_String());
+        $twigged = $this->app['twig']->environment->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
+        $this->app['twig']->environment->setLoader($herbieLoader);
 
         $formatter = \Herbie\Formatter\FormatterFactory::create($format);
         $ret = strtr($formatter->transform($twigged), $this->replace_pairs);
