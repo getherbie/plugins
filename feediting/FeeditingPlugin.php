@@ -49,13 +49,15 @@ class FeeditingPlugin extends \Herbie\Plugin
     protected function onPageLoaded(\Herbie\Event $event )
     {
         $this->app = $event->offsetGet('app');
+        $alias = $this->app['alias'];
 
-        // reload page without twig
         $_page = $event->offsetGet('page');
-        $_page->setLoader(new \Herbie\Loader\PageLoader($this->app['alias']));
+        $_page->setLoader(new \Herbie\Loader\PageLoader($alias));
+        $_path = $alias->get($this->app['menu']->getItem($this->app['route'])->getPath());
         $_page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
         $_segments = $_page->getSegments();
         $_content = array();
+        $_cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
 
         foreach($_segments as $segmentid => $content)
         {
@@ -69,14 +71,11 @@ class FeeditingPlugin extends \Herbie\Plugin
             unset($contentblocks);
         };
 
-        $cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
-        switch($cmd)
+        switch($_cmd)
         {
             case 'load':
                 list($contenturi, $elemid) = explode('#', $_REQUEST['id']);
                 list($contenttype, $contentkey) = explode('-', $contenturi);
-
-//                var_dump($_content[$contentkey]['blocks']);
 
                 // move pointer to the requested element
                 while (
@@ -96,7 +95,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     $currsegmentid                  = $elemid % $this->config['contentBlockDimension'];
 
                     // read page's header
-                    $fh = fopen($_page->getPath(), 'r');
+                    $fh = fopen($_path, 'r');
                     if($fh) {
                         $currline = 0;
                         $fheader = '';
@@ -120,7 +119,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                         // TODO: Sanitize input, store only valid $contenttype!
                         $_content[$currsegmentid]['blocks'][$elemid] = (string) $_POST['value'].$_content[$currsegmentid]['eob'];
 
-                        $fh = fopen($_page->getPath(), 'w');
+                        $fh = fopen($_path, 'w');
                         fputs($fh, $fheader);
                         foreach($_content as $fsegment => $fcontent){
                             if( $fsegment > 0 ) {
@@ -134,9 +133,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     }
 
                     // reload page after saving
-                    $menuItem   = $this->app['urlMatcher']->match($this->app['route']);
-                    $pageLoader = new \Herbie\Loader\PageLoader();
-                    $_page      = $pageLoader->load($menuItem->getPath());
+                    $_page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
                     $_segments  = $_page->getSegments();
 
                     // "blockify" reloaded content
