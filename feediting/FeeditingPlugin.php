@@ -51,6 +51,9 @@ class FeeditingPlugin extends \Herbie\Plugin
         $this->app = $event->offsetGet('app');
         $alias = $this->app['alias'];
 
+        // Disable Caching while editing
+        $this->app['twig']->environment->setCache(false);
+
         $_page = $event->offsetGet('page');
         $_page->setLoader(new \Herbie\Loader\PageLoader($alias));
         $_path = $alias->get($this->app['menu']->getItem($this->app['route'])->getPath());
