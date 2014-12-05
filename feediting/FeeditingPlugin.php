@@ -64,6 +64,10 @@ class FeeditingPlugin extends \Herbie\Plugin
 
         foreach($_segments as $segmentid => $content)
         {
+            if(trim($content)=='') {
+                $content = PHP_EOL.'Click to edit'.PHP_EOL;
+            }
+
             $contentblocks          = $this->getContentBlocks($_page->format, $content, $segmentid);
             $_segments[$segmentid]  = implode($contentblocks['eob'], $contentblocks['blocks']);
             $_content[$segmentid]   = array(
