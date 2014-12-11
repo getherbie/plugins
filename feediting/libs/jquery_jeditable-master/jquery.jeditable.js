@@ -486,6 +486,31 @@
                     return(textarea);
                 }
             },
+            sirtrevor: {
+                element : function(settings, original) {
+
+                    var textarea = $('<textarea />');
+                    if (settings.rows) {
+                        textarea.attr('rows', settings.rows);
+                    } else if (settings.height != "none") {
+                        textarea.height(settings.height);
+                    }
+                    if (settings.cols) {
+                        textarea.attr('cols', settings.cols);
+                    } else if (settings.width != "none") {
+                        textarea.width(settings.width);
+                    }
+                    textarea.attr('class', 'sir-trevor');
+
+                    $(this).append(textarea);
+                    return(textarea);
+                },
+                /* attach sirtrevor-instance */
+                plugin : function(settings, original) {
+                    var form = this;
+                    callSirTrevor();
+                }
+            },
             select: {
                element : function(settings, original) {
                     var select = $('<select />');

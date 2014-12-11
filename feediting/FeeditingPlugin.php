@@ -92,7 +92,21 @@ class FeeditingPlugin extends \Herbie\Plugin
                     $requestedBlock = next($_content[$contentkey]['blocks']);
                 }
 
-                die(trim($this->renderRawContent($requestedBlock, $contenttype)));
+                $markdown = trim($this->renderRawContent($requestedBlock, $contenttype));
+//                die($markdown);
+
+                $sirtrevor =
+'{
+    "data": [{
+        "type": "text",
+        "data": {
+            "text": "'.$markdown.'"
+        }
+    }]
+    }
+';
+
+                die($sirtrevor);
 
             case 'save':
                 if(
@@ -186,8 +200,17 @@ class FeeditingPlugin extends \Herbie\Plugin
         $_response     = $event->offsetGet('response');
         $_plugin_path  = str_replace($_app['webPath'], '', $_app['config']->get('plugins_path')).'/feediting/';
 
+        $this->replace_pairs['<body>'] =
+            '<link rel="stylesheet" href="'.$_plugin_path.'libs/sir-trevor-js/sir-trevor-icons.css" type="text/css" media="screen" title="no title" charset="utf-8">'
+            .'<link rel="stylesheet" href="'.$_plugin_path.'libs/sir-trevor-js/sir-trevor.css" type="text/css" media="screen" title="no title" charset="utf-8">'
+            .'<body>';
+
         $this->replace_pairs['</body>'] =
             '<script src="'.$_plugin_path.'libs/jquery_jeditable-master/jquery.jeditable.js" type="text/javascript" charset="utf-8"></script>'
+            .'<script src="'.$_plugin_path.'libs/underscore/underscore.js" type="text/javascript" charset="utf-8"></script>'
+            .'<script src="'.$_plugin_path.'libs/Eventable/eventable.js" type="text/javascript" charset="utf-8"></script>'
+            .'<script src="'.$_plugin_path.'libs/sir-trevor-js/sir-trevor.js" type="text/javascript" charset="utf-8"></script>'
+            .'<script src="'.$_plugin_path.'libs/sir-trevor-js/locales/de.js" type="text/javascript" charset="utf-8"></script>'
             .'<script type="text/javascript" charset="utf-8">'
             .$this->getJSEditablesConfig($_plugin_path)
             .'</script>'
@@ -327,7 +350,7 @@ class FeeditingPlugin extends \Herbie\Plugin
         );
     }
 
-    private function setJSEditableConfig( $containerId = 0, $format, $class, $containerSelector='.', $type='textarea' )
+    private function setJSEditableConfig( $containerId = 0, $format, $class, $containerSelector='.', $type='sirtrevor' )
     {
         $this->config['editables'][$format.'-'.$containerId] = array(
 
@@ -406,6 +429,24 @@ class FeeditingPlugin extends \Herbie\Plugin
         return
 'function makeJeditable() {
 '.implode($ret).'
+};
+
+function callSirTrevor() {
+
+      window.editor = new SirTrevor.Editor({
+        el: $(".sir-trevor"),
+        blockTypes: [
+          "Heading",
+          "Text",
+          "List",
+          "Quote",
+          "Image",
+          "Video",
+          "Tweet"
+        ],
+        defaultType: "Text",
+        blockLimit: 1
+      });
 };
 
 $(document).ready(function(){
