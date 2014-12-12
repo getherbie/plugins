@@ -11,35 +11,50 @@
 
 namespace herbie\plugin\feediting;
 
+use herbie\plugin\feediting\classes\FeeditableContent;
 use Twig_Loader_String;
 
 class FeeditingPlugin extends \Herbie\Plugin
 {
-    private $config = [];
+    protected $config = [];
 
-    protected $app = null;
+    protected $authenticated = false;
 
-    private $authenticated = false;
+    protected $editableSegments = [];
 
-    private $replace_pairs = [];
+    protected $replace_pairs = [];
 
-    private $remove_pairs = [];
+    protected $remove_pairs = [];
 
-    public function __construct()
+    public function __construct(\Herbie\Application $app)
     {
+        parent::__construct($app);
+
         // TODO: Implement some kind of authentication!
         $this->authenticated = true;
 
         // set defaults
         $this->config['contentBlockDimension'] = 100;
         $this->config['contentSegment_WrapperPrefix'] = 'placeholder-';
-        $this->config['jeditable_prefix'] = 'editable_';
+        $this->config['editable_prefix'] = 'editable_';
     }
 
     public function __call($funcname, $args)
     {
         if($this->authenticated === true){
-            return $this->{$funcname}($args[0]);
+            switch(count($args)){
+                case 5:
+                    return $this->{$funcname}($args[0], $args[1], $args[2], $args[3], $args[4]);
+                case 4:
+                    return $this->{$funcname}($args[0], $args[1], $args[2], $args[3]);
+                case 3:
+                    return $this->{$funcname}($args[0], $args[1], $args[2]);
+                case 2:
+                    return $this->{$funcname}($args[0], $args[1]);
+                case 1:
+                default:
+                    return $this->{$funcname}($args[0]);
+            }
         } else {
             return;
         }
@@ -48,34 +63,38 @@ class FeeditingPlugin extends \Herbie\Plugin
     // fetch markdown-contents for jeditable
     protected function onPageLoaded(\Herbie\Event $event )
     {
-        $this->app = $event->offsetGet('app');
-        $alias = $this->app['alias'];
-
         // Disable Caching while editing
         $this->app['twig']->environment->setCache(false);
 
+        $_alias = $this->app['alias'];
+
+        $_path = $_alias->get($this->app['menu']->getItem($this->app['route'])->getPath());
         $_page = $event->offsetGet('page');
-        $_page->setLoader(new \Herbie\Loader\PageLoader($alias));
-        $_path = $alias->get($this->app['menu']->getItem($this->app['route'])->getPath());
+        $_page->setLoader(new \Herbie\Loader\PageLoader($_alias));
         $_page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
+
         $_segments = $_page->getSegments();
         $_content = array();
         $_cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
 
         foreach($_segments as $segmentid => $content)
         {
-            if(trim($content)=='') {
+            if(trim($content)=='')
+            {
                 $content = PHP_EOL.'Click to edit'.PHP_EOL;
             }
+            else
+            {
+                $this->editableSegments[$segmentid] = new FeeditableContent($this, $_page->format);
+                $this->editableSegments[$segmentid]->setContent($content);
 
-            $contentblocks          = $this->getContentBlocks($_page->format, $content, $segmentid);
-            $_segments[$segmentid]  = implode($contentblocks['eob'], $contentblocks['blocks']);
-            $_content[$segmentid]   = array(
-                'blocks' => $contentblocks['blocks'],
-                'format' => $contentblocks['format'],
-                'eob' => $contentblocks['eob'] // "end of block"
-            );
-            unset($contentblocks);
+                $_segments[$segmentid]  = implode( $this->editableSegments[$segmentid]->getEob(),  $this->editableSegments[$segmentid]->getContent() );
+                $_content[$segmentid]   = array(
+                    'blocks' => $this->editableSegments[$segmentid]->getContent(),
+                    'format' => $this->editableSegments[$segmentid]->getFormat(),
+                    'eob'    => $this->editableSegments[$segmentid]->getEob()
+                );
+            }
         };
 
         switch($_cmd)
@@ -94,6 +113,12 @@ class FeeditingPlugin extends \Herbie\Plugin
 
                 $markdown = trim($this->renderRawContent($requestedBlock, $contenttype));
 //                die($markdown);
+
+//                $sirtrevor =
+//'"type": "text",
+//"data": {
+//    "text": "'.$markdown.'"
+//}';
 
                 $sirtrevor =
 '{
@@ -115,7 +140,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     && $_POST['id']
                 ) {
 
-                    list($contenturi, $elemid)      = explode('#', str_replace($this->config['jeditable_prefix'], '', $_POST['id']));
+                    list($contenturi, $elemid)      = explode('#', str_replace($this->config['editable_prefix'], '', $_POST['id']));
                     list($contenttype, $contentkey) = explode('-', $contenturi);
                     $currsegmentid                  = $elemid % $this->config['contentBlockDimension'];
 
@@ -141,8 +166,13 @@ class FeeditingPlugin extends \Herbie\Plugin
                     // save modified contents
                     if( isset($_content[$currsegmentid]['blocks'][$elemid]))
                     {
+                        // sir-trevor-js delivers json
+                        $debug = json_decode($_POST['value']);
+
                         // TODO: Sanitize input, store only valid $contenttype!
                         $_content[$currsegmentid]['blocks'][$elemid] = (string) $_POST['value'].$_content[$currsegmentid]['eob'];
+
+                        die();
 
                         $fh = fopen($_path, 'w');
                         fputs($fh, $fheader);
@@ -150,7 +180,6 @@ class FeeditingPlugin extends \Herbie\Plugin
                             if( $fsegment > 0 ) {
                                 fputs($fh, "--- {$fsegment} ---".PHP_EOL);
                             }
-//                            $modified = strtr(implode($fcontent['blocks']), $this->remove_pairs);
                             $modified = $this->renderRawContent(implode($fcontent['blocks']), $contenttype, true );
                             fputs($fh, $modified);
                         }
@@ -162,21 +191,21 @@ class FeeditingPlugin extends \Herbie\Plugin
                     $_segments  = $_page->getSegments();
 
                     // "blockify" reloaded content
-                    $jeditable_contents = $this->getContentBlocks($contenttype, $_segments[$currsegmentid], $currsegmentid);
+                    $jeditable_contents = $this->setContentBlocks($contenttype, $_segments[$currsegmentid], $currsegmentid);
 
                     // 'placeholder' must match the actual segment-wrapper! ( see HerbieExtension::functionContent() )
                     $jeditable_segment =
                         // open wrap
-                        $this->setJeditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
+                        $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
                         // wrapped segment
                         .implode($jeditable_contents['eob'], $jeditable_contents['blocks'])
                         // close wrap
-                        .$this->setJeditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
+                        .$this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
                     ;
 
                     // render jeditable contents
                     $_page->setSegments(array(
-                        $currsegmentid => $this->renderJeditableContent($jeditable_segment, $contenttype)
+                        $currsegmentid => $this->renderEditableContent($jeditable_segment, $contenttype)
                     ));
                     die($this->app->renderContentSegment($currsegmentid));
                 }
@@ -185,7 +214,7 @@ class FeeditingPlugin extends \Herbie\Plugin
             default:
 
                 foreach($_segments as $id => $_segment){
-                    $_segments[$id] = $this->renderJeditableContent($_segment, 'markdown');
+                    $_segments[$id] = $this->renderEditableContent($_segment, 'markdown');
                 }
 
                 $_page->setSegments($_segments);
@@ -212,7 +241,7 @@ class FeeditingPlugin extends \Herbie\Plugin
             .'<script src="'.$_plugin_path.'libs/sir-trevor-js/sir-trevor.js" type="text/javascript" charset="utf-8"></script>'
             .'<script src="'.$_plugin_path.'libs/sir-trevor-js/locales/de.js" type="text/javascript" charset="utf-8"></script>'
             .'<script type="text/javascript" charset="utf-8">'
-            .$this->getJSEditablesConfig($_plugin_path)
+            .$this->getEditablesJsConfig($_plugin_path)
             .'</script>'
             .'</body>';
 
@@ -221,137 +250,9 @@ class FeeditingPlugin extends \Herbie\Plugin
         ));
     }
 
-    /**
-     * @param string $content
-     * @param int $uid
-     * @return array('blocks', 'eop', 'format')
-     */
-    private function getContentBlocks($format, $content, $contentid, $contentBlockDimension = 100, $dimensionOffset = 0)
+    private function setEditablesJsConfig( $containerId = 0, $format, $class, $containerSelector='.', $type='sirtrevor' )
     {
-        $ret = [];
-
-            // currently only (twitter-bootstrap)markdown supported!
-        $ret = $this->{'identify'.ucfirst($format).'Blocks'}($content, $contentid, $contentBlockDimension, $dimensionOffset);
-
-            // strip empty blocks
-        $lastBlockUid = 0;
-        $beforeLastBlockUid = 0;
-        foreach($ret['blocks'] as $blockUid => $blockContents)
-        {
-            if(
-                $lastBlockUid
-                && $beforeLastBlockUid
-                && $blockContents == PHP_EOL
-                && $stripped[$lastBlockUid] == PHP_EOL
-//                && $stripped[$beforeLastBlockUid] == PHP_EOL
-            )
-                continue;
-            else
-                $stripped[$blockUid] = $blockContents;
-
-            $beforeLastBlockUid = $lastBlockUid;
-            $lastBlockUid       = $blockUid;
-        }
-        $ret['blocks'] = $stripped;
-
-        return $ret;
-    }
-
-    /**
-     * @param $content
-     * @param $uid
-     * @return array() numbered paragraphs
-     */
-    private function identifyMarkdownBlocks( $content, $contentid, $contentBlockDimension = 100, $dimensionOffset = 0 )
-    {
-        $ret    = [];
-        $format = 'markdown';
-        $eol    = PHP_EOL;
-        $eob    = PHP_EOL; // end of block
-        $class  = $this->config['jeditable_prefix'].$format.'-'.$contentid;
-        $openBlock = true;
-        $blockId = 0;
-
-        $this->defineLineFeed($format, '<!--eol-->');
-        $this->setJSEditableConfig( $contentid, $format, $class );
-
-        $lines = explode($eol, $content);
-        foreach($lines as $ctr => $line)
-        {
-                // index + 100 so we have enough "space" to create new blocks "on-the-fly" when editing the page
-            $lineno = $ctr * $contentBlockDimension + $dimensionOffset;
-
-                // respect content-segments
-            if(preg_match('/--- (.*) ---/', $line)) $contentid++;
-            $lineno = $lineno + $contentid;
-
-            switch($line){
-
-                    // don't edit bootstrap-markdown...
-                case "----":
-                case "-- end --":
-                    // ...and blank lines
-                case "":
-                    $ret[$lineno] = ( $ctr == count($lines)-1 ) ? $line : $line.$eol;
-                    if($blockId)
-                    {
-                        $ret[$blockId] .= ($contentid === false) ? '' : $this->setJeditableTag($blockId, $contentid, $class, 'stop', MARKDOWN_EOL);
-                        $blockId = 0;
-                        $openBlock = true;
-                    }
-                    break;
-
-                default:
-
-                    // don't edit bootstrap-markdown (cont.):
-                    // eg content like "-- row n1,n2,n3,..,n12 --"
-                    if(substr($line, 0, strlen('-- row ')) == '-- row ')
-                    {
-                        $ret[$lineno] = $line.$eol;
-                        if($blockId)
-                        {
-                            $ret[$blockId] .= ($contentid === false) ? '' : $this->setJeditableTag($blockId, $contentid, $class, 'stop', MARKDOWN_EOL);
-                            $blockId = 0;
-                            $openBlock = true;
-                        }
-                        continue;
-                    }
-
-                    // group some elements in their own block, eg header:
-                    if(substr($line, 0, strlen('#')) == '#')
-                    {
-                        $ret[$lineno] = $line.$eol;
-                        if($blockId)
-                        {
-                            $ret[$blockId] .= ($contentid === false) ? '' : $this->setJeditableTag($blockId, $contentid, $class, 'stop', MARKDOWN_EOL);
-                            $blockId = 0;
-                            $openBlock = true;
-                        }
-                    }
-
-                    if($openBlock)
-                    {
-                        $blockId = $lineno;
-                        $ret[$blockId] = ($contentid === false) ? '' : $this->setJeditableTag($blockId, $contentid, $class, 'start', MARKDOWN_EOL);
-                        $ret[$blockId] .= $line.$eol;
-                        $openBlock = false;
-                    }
-                    else
-                    {
-                        $ret[$blockId] .= $line.$eol;
-                    }
-            }
-        }
-
-        return array(
-            'blocks' => $ret,
-            'eob' => $eob,
-            'format' => $format
-        );
-    }
-
-    private function setJSEditableConfig( $containerId = 0, $format, $class, $containerSelector='.', $type='sirtrevor' )
-    {
+        return;
         $this->config['editables'][$format.'-'.$containerId] = array(
 
             'identifier' => $class,
@@ -372,7 +273,7 @@ class FeeditingPlugin extends \Herbie\Plugin
         );
     }
 
-    private function setJeditableTag( $contentUid, $containerUid=0, $contentClass, $mode='auto', $eol = PHP_EOL)
+    private function setEditableTag( $contentUid, $containerUid=0, $contentClass, $mode='auto', $eol = PHP_EOL)
     {
         $class = $contentClass;
         $id    = $contentClass.'#'.$contentUid;
@@ -381,14 +282,14 @@ class FeeditingPlugin extends \Herbie\Plugin
 
             case 'start':
                 $mark = '<!-- ###'.$id.'### Start -->';
-                $this->replace_pairs[$mark] = '<div class="'.$class.'" id="'.$id.'">';
+                $this->replace_pairs[$mark] = '{"type":"text","data":{"text":"';
                 $this->remove_pairs[$mark] = '';
                 return $eol.$mark.$eol;
             break;
 
             case 'stop':
                 $mark = '<!-- ###'.$class.'### Stop -->';
-                $this->replace_pairs[$mark] = '</div>';
+                $this->replace_pairs[$mark] = '"}},';
                 $this->remove_pairs[$mark] = '';
                 return $eol.$mark.$eol;
             break;
@@ -402,37 +303,23 @@ class FeeditingPlugin extends \Herbie\Plugin
                 $stopmark  = '<!-- ###'.$class.'### Stop -->';
                 if(!isset($this->replace_pairs[$startmark]))
                 {
-                    $this->replace_pairs[$startmark] = '<div class="'.$class.'" id="'.$id.'">';
+                    $this->replace_pairs[$startmark] = '{"type":"text","data":{"text":"';
                     $this->remove_pairs[$startmark] = '';
                     return $eol.$startmark.$eol;
                 }
                 elseif(!isset($this->replace_pairs[$stopmark]))
                 {
-                    $this->replace_pairs[$stopmark] = '</div>';
+                    $this->replace_pairs[$stopmark] = '"}},';
                     $this->remove_pairs[$stopmark] = '';
                     return $eol.$stopmark.$eol;
                 }
         }
     }
     
-    private function getJSEditablesConfig( $pluginPath )
+    private function getEditablesJsConfig( $pluginPath )
     {
-        $ret = [];
-
-        if(!isset($this->config['editables'])) return;
-        foreach($this->config['editables'] as $type){
-            $ret[] = strtr($type['config'], array(
-                '###plugin_path###' => $pluginPath
-            ));
-        }
-
         return
-'function makeJeditable() {
-'.implode($ret).'
-};
-
-function callSirTrevor() {
-
+'
       window.editor = new SirTrevor.Editor({
         el: $(".sir-trevor"),
         blockTypes: [
@@ -444,14 +331,8 @@ function callSirTrevor() {
           "Video",
           "Tweet"
         ],
-        defaultType: "Text",
-        blockLimit: 1
+        defaultType: "Text"
       });
-};
-
-$(document).ready(function(){
-    makeJeditable();
-});
 ';
     }
 
@@ -472,15 +353,19 @@ $(document).ready(function(){
      * @param string $format, eg. 'markdown'
      * @return string
      */
-    private function renderJeditableContent( $content, $format )
+    private function renderEditableContent( $content, $format )
     {
-        $herbieLoader = $this->app['twig']->environment->getLoader();
-        $this->app['twig']->environment->setLoader(new Twig_Loader_String());
-        $twigged = $this->app['twig']->environment->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
-        $this->app['twig']->environment->setLoader($herbieLoader);
+//        $herbieLoader = $this->app['twig']->environment->getLoader();
+//        $this->app['twig']->environment->setLoader(new Twig_Loader_String());
+//        $twigged = $this->app['twig']->environment->render(strtr($content, array( constant(strtoupper($format).'_EOL') => PHP_EOL )));
+//        $this->app['twig']->environment->setLoader($herbieLoader);
 
-        $formatter = \Herbie\Formatter\FormatterFactory::create($format);
-        $ret = strtr($formatter->transform($twigged), $this->replace_pairs);
+//        $formatter = \Herbie\Formatter\FormatterFactory::create($format);
+//        $ret = strtr($formatter->transform($twigged), $this->replace_pairs);
+        $ret = strtr($content, $this->replace_pairs);
+        $ret = strtr($content, array(PHP_EOL => ''));
+
+        $ret = '<form><textarea class="sir-trevor">{"data":['.$ret.'{}]}</textarea><input type="submit" name="cmd" value="save"/></form>';
 
         return $ret;
     }
@@ -493,6 +378,11 @@ $(document).ready(function(){
         // used in in-page-editor
         if(!defined('EDITABLE_'.$FORMAT_EOL)) define('EDITABLE_'.$FORMAT_EOL, $eol);
 
+        $this->replace_pairs[$eol] = '';
         $this->remove_pairs[$eol] = '';
+    }
+
+    public function getConfig(){
+        return $this->config;
     }
 }
