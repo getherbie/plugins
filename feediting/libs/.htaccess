@@ -1,6 +1,6 @@
 
 # Allow access to widget files
-<Files ~ "\.(js|css)">
+<Files ~ "\.(js|css|map)">
  allow from all
 </Files>
 

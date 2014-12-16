@@ -99,39 +99,16 @@ class FeeditingPlugin extends \Herbie\Plugin
 
         switch($_cmd)
         {
-            case 'load':
-                list($contenturi, $elemid) = explode('#', $_REQUEST['id']);
-                list($contenttype, $contentkey) = explode('-', $contenturi);
-
-                // move pointer to the requested element
-                while (
-                    key($_content[$contentkey]['blocks']) != $elemid
-                    && current($_content[$contentkey]['blocks']) !== false
-                ){
-                    $requestedBlock = next($_content[$contentkey]['blocks']);
+            case 'upload':
+                if($_FILES){
+                    $uploaddir = dirname($_path);
+                    $uploadfile = $uploaddir . DS. basename($_FILES['attachment']['name']['file']);
+                    if (move_uploaded_file($_FILES['attachment']['tmp_name']['file'], $uploadfile)) {
+                      $sirtrevor = '{ "path": "'.$uploadfile.'"}';
+                      die($sirtrevor);
+                    }
                 }
-
-                $markdown = trim($this->renderRawContent($requestedBlock, $contenttype));
-//                die($markdown);
-
-//                $sirtrevor =
-//'"type": "text",
-//"data": {
-//    "text": "'.$markdown.'"
-//}';
-
-                $sirtrevor =
-'{
-    "data": [{
-        "type": "text",
-        "data": {
-            "text": "'.$markdown.'"
-        }
-    }]
-    }
-';
-
-                die($sirtrevor);
+                die();
 
             case 'save':
                 if(
@@ -323,8 +300,8 @@ class FeeditingPlugin extends \Herbie\Plugin
       window.editor = new SirTrevor.Editor({
         el: $(".sir-trevor"),
         blockTypes: [
-          "Heading",
           "Text",
+          "Heading",
           "List",
           "Quote",
           "Image",
@@ -332,6 +309,9 @@ class FeeditingPlugin extends \Herbie\Plugin
           "Tweet"
         ],
         defaultType: "Text"
+      });
+      SirTrevor.setDefaults({
+        uploadUrl: "/?cmd=upload"
       });
 ';
     }
@@ -365,7 +345,7 @@ class FeeditingPlugin extends \Herbie\Plugin
         $ret = strtr($content, $this->replace_pairs);
         $ret = strtr($content, array(PHP_EOL => ''));
 
-        $ret = '<form><textarea class="sir-trevor">{"data":['.$ret.'{}]}</textarea><input type="submit" name="cmd" value="save"/></form>';
+        $ret = '<form><textarea class="sir-trevor">{"data":['.$ret.'{}]}</textarea><input type="submit" name="cmd" value="save" class="btn" /></form>';
 
         return $ret;
     }

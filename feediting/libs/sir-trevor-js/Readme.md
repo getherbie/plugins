@@ -40,6 +40,8 @@ Sir Trevor is only tested on the following modern browsers:
 - Safari 5+
 - Firefox 16+
 
+ECMAScript 6 shims are bundled in by default; if the platform you wish to run on doesn't support ECMAScript 5 APIs you'll need to shim those yourself.
+
 ## Dependencies
 
 Sir Trevor requires [Underscore](http://underscorejs.org/) (or LoDash), [jQuery](http://jquery.com) (or Zepto) and [Eventable](https://github.com/madebymany/eventable).
@@ -62,9 +64,7 @@ We use the awesome [Grunt](http://gruntjs.com/) for our build process. Before ge
 
 ``$ npm install``
 
-Make sure install the dependecies of bower. As you need jQuery, Eventable and Underscore while you are testing with Jasmine:
-
-``$ bower install``
+This should also install the dependencies of bower via the `postinstall` script. If you change bower dependencies, re-run this command.
 
 When completed you'll be able to run the various grunt commands provided:
 
