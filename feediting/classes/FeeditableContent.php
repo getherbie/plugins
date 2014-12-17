@@ -76,13 +76,11 @@ class FeeditableContent {
     {
         $ret        = [];
         $eol        = PHP_EOL;
-        $eob        = $this->eob;
         $class      = $this->pluginConfig['editable_prefix'].$this->format.'-'.$this->segmentid;
         $openBlock  = true;
         $blockId    = 0;
 
         $this->plugin->defineLineFeed($this->getFormat(), '<!--eol-->');
-        $this->plugin->setEditablesJsConfig( $this->segmentid, $this->format, $class );
 
         $lines = explode($eol, $content);
         foreach($lines as $ctr => $line)
@@ -94,20 +92,24 @@ class FeeditableContent {
 //            if(preg_match('/--- (.*) ---/', $line)) $this->segmentid++;
             $lineno = $lineno + $this->segmentid;
 
-            switch($line){
-
+            switch($line)
+            {
                 // don't edit bootstrap-markdown...
                 case "----":
                 case "-- end --":
                     // ...and blank lines
                 case "":
-                    $ret[$lineno] = ( $ctr == count($lines)-1 ) ? $line : $line.$eol;
+
+                    // close previous block
                     if($blockId)
                     {
-                        $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->plugin->setEditableTag($blockId, $this->segmentid, $class, 'stop', MARKDOWN_EOL);
+                        $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
                         $blockId = 0;
                         $openBlock = true;
                     }
+
+                    // continue reading
+                    $ret[$lineno] = ( $ctr == count($lines)-1 ) ? $line : $line.$eol;
                     break;
 
                 default:
@@ -116,32 +118,56 @@ class FeeditableContent {
                     // eg content like "-- row n1,n2,n3,..,n12 --"
                     if(substr($line, 0, strlen('-- row ')) == '-- row ')
                     {
-                        $ret[$lineno] = $line.$eol;
+                        // close previous block
                         if($blockId)
                         {
-                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->plugin->setEditableTag($blockId, $this->segmentid, $class, 'stop', MARKDOWN_EOL);
+                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
                             $blockId = 0;
                             $openBlock = true;
                         }
+
+                        // continue reading
+                        $ret[$lineno] = $line.$eol;
                         continue;
                     }
 
                     // group some elements in their own block, eg header:
                     if(substr($line, 0, strlen('#')) == '#')
                     {
-                        $ret[$lineno] = $line.$eol;
+                        // close previous block
                         if($blockId)
                         {
-                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->plugin->setEditableTag($blockId, $this->segmentid, $class, 'stop', MARKDOWN_EOL);
+                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
                             $blockId = 0;
                             $openBlock = true;
                         }
+
+                        // continue reading
+                        $ret[$lineno] = $line.$eol;
+                        continue;
+
+                    }
+
+                    // group some elements in their own block, eg. SirTrevor-ImageBlock
+                    if(substr($line, 0, strlen('![')) == '![')
+                    {
+                        // close previous block
+                        if($blockId)
+                        {
+                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
+                            $blockId = 0;
+                            $openBlock = true;
+                        }
+
+                        // just testing
+                        $ret[$lineno] = '{"type":"image","data":{"file":{"url":"http://netzweberei.getherbie.localhost/site/pages/Bildschirmfoto.png"}}},';
+                        continue;
                     }
 
                     if($openBlock)
                     {
                         $blockId = $lineno;
-                        $ret[$blockId] = ($this->segmentid === false) ? '' : $this->plugin->setEditableTag($blockId, $this->segmentid, $class, 'start', MARKDOWN_EOL);
+                        $ret[$blockId] = ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'start', MARKDOWN_EOL);
                         $ret[$blockId] .= $line.$eol;
                         $openBlock = false;
                     }
@@ -180,5 +206,57 @@ class FeeditableContent {
             $lastBlockUid       = $blockUid;
         }
         $this->blocks = $stripped;
+    }
+
+    private function setEditableTag( $contentUid, $contentClass, $mode='auto', $eol = PHP_EOL, $blockType='text')
+    {
+        $class = $contentClass;
+        $id    = $contentClass.'#'.$contentUid;
+
+        switch($blockType)
+        {
+            case 'image':
+                $openBlockTypeInJson = '{"type":"image","data":{"file":{"url":"';
+                $stopBlockTypeInJson = '"}}},';
+                break;
+            
+            case 'text':
+            default:
+                $openBlockTypeInJson = '{"type":"text","data":{"text":"';
+                $stopBlockTypeInJson = '"}},';
+        }
+
+        switch($mode){
+
+            case 'start':
+                $mark = '<!-- ###'.$id.'### Start -->';
+                $this->plugin->setReplacement($mark,$openBlockTypeInJson);
+                return $eol.$mark.$eol;
+                break;
+
+            case 'stop':
+                $mark = '<!-- ###'.$class.'### Stop -->';
+                $this->plugin->setReplacement($mark,$stopBlockTypeInJson);
+                return $eol.$mark.$eol;
+                break;
+
+            case 'wrap':
+                $id     = $contentClass;
+                $class  = $id;
+            case 'auto':
+            default:
+                $startmark = '<!-- ###'.$id.'### Start -->';
+                $stopmark  = '<!-- ###'.$class.'### Stop -->';
+                if($this->plugin->getReplacement($startmark)=='')
+                {
+                    $this->plugin->setReplacement($startmark,$openBlockTypeInJson);
+                    return $eol.$startmark.$eol;
+                }
+                elseif($this->plugin->getReplacement($stopmark)=='')
+                {
+                    $this->plugin->setReplacement($stopmark,$stopBlockTypeInJson);
+                    return $eol.$stopmark.$eol;
+                }
+        }
     }
 } 

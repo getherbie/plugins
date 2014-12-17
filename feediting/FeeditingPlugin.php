@@ -170,15 +170,15 @@ class FeeditingPlugin extends \Herbie\Plugin
                     // "blockify" reloaded content
                     $jeditable_contents = $this->setContentBlocks($contenttype, $_segments[$currsegmentid], $currsegmentid);
 
-                    // 'placeholder' must match the actual segment-wrapper! ( see HerbieExtension::functionContent() )
-                    $jeditable_segment =
-                        // open wrap
-                        $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
-                        // wrapped segment
-                        .implode($jeditable_contents['eob'], $jeditable_contents['blocks'])
-                        // close wrap
-                        .$this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
-                    ;
+//                    // 'placeholder' must match the actual segment-wrapper! ( see HerbieExtension::functionContent() )
+//                    $jeditable_segment =
+//                        // open wrap
+//                        $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
+//                        // wrapped segment
+//                        .implode($jeditable_contents['eob'], $jeditable_contents['blocks'])
+//                        // close wrap
+//                        .$this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
+//                    ;
 
                     // render jeditable contents
                     $_page->setSegments(array(
@@ -227,70 +227,13 @@ class FeeditingPlugin extends \Herbie\Plugin
         ));
     }
 
-    private function setEditablesJsConfig( $containerId = 0, $format, $class, $containerSelector='.', $type='sirtrevor' )
-    {
-        return;
-        $this->config['editables'][$format.'-'.$containerId] = array(
-
-            'identifier' => $class,
-            'config'     => '
-    $(".'.$class.'").editable("?cmd=save&renderer='.$format.'", {
-        indicator : "<img src=\'###plugin_path###libs/jquery_jeditable-master/img/indicator.gif\'>",
-        loadurl   : "?cmd=load&renderer='.$format.'",
-        type      : "'.$type.'",
-        submit    : "OK",
-        cancel    : "Cancel",
-        tooltip   : "Click to edit...",
-        ajaxoptions : {
-            replace : "with",
-            container : "'.$containerSelector.$this->config['contentSegment_WrapperPrefix'].$containerId.'"
-        }
-    });
-'
-        );
+    private function getReplacement($mark){
+        return $this->replace_pairs[$mark];
     }
 
-    private function setEditableTag( $contentUid, $containerUid=0, $contentClass, $mode='auto', $eol = PHP_EOL)
-    {
-        $class = $contentClass;
-        $id    = $contentClass.'#'.$contentUid;
-
-        switch($mode){
-
-            case 'start':
-                $mark = '<!-- ###'.$id.'### Start -->';
-                $this->replace_pairs[$mark] = '{"type":"text","data":{"text":"';
-                $this->remove_pairs[$mark] = '';
-                return $eol.$mark.$eol;
-            break;
-
-            case 'stop':
-                $mark = '<!-- ###'.$class.'### Stop -->';
-                $this->replace_pairs[$mark] = '"}},';
-                $this->remove_pairs[$mark] = '';
-                return $eol.$mark.$eol;
-            break;
-
-            case 'wrap':
-                $id     = $contentClass;
-                $class  = $id;
-            case 'auto':
-            default:
-                $startmark = '<!-- ###'.$id.'### Start -->';
-                $stopmark  = '<!-- ###'.$class.'### Stop -->';
-                if(!isset($this->replace_pairs[$startmark]))
-                {
-                    $this->replace_pairs[$startmark] = '{"type":"text","data":{"text":"';
-                    $this->remove_pairs[$startmark] = '';
-                    return $eol.$startmark.$eol;
-                }
-                elseif(!isset($this->replace_pairs[$stopmark]))
-                {
-                    $this->replace_pairs[$stopmark] = '"}},';
-                    $this->remove_pairs[$stopmark] = '';
-                    return $eol.$stopmark.$eol;
-                }
-        }
+    private function setReplacement($mark, $replacement){
+        $this->replace_pairs[$mark] = $replacement;
+        $this->remove_pairs[$mark] = '';
     }
     
     private function getEditablesJsConfig( $pluginPath )
