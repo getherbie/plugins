@@ -29,8 +29,16 @@ class FeeditableContent {
     protected $pluginConfig = [];
 
     protected $eob = PHP_EOL;
+
+    protected $openImageBlock = '{"type":"image","data":{"file":{"url":"';
+
+    protected $closeImageBlock = '"}}},';
+
+    protected $openTextBlock = '{"type":"text","data":{"text":"';
+
+    protected $closeTextBlock = '"}},';
     
-    public function __construct(FeeditingPlugin $plugin, $format, $segmentid = null, $eob = null)
+    public function __construct(FeeditingPlugin &$plugin, $format, $segmentid = null, $eob = null)
     {
         $this->plugin = $plugin;
         $this->format = $format;
@@ -40,6 +48,20 @@ class FeeditableContent {
         if($eob) $this->eob = $eob;
     }
 
+    public function getFormat(){
+        return $this->format;
+    }
+
+    public function getEob(){
+        return $this->eob;
+    }
+
+    public function getSegment($eob=true){
+        if($eob)
+            return implode( $this->getEob(),  $this->getContent() );
+        else
+            return implode( $this->getContent() );
+    }
 
     /**
      * @param string $content
@@ -59,19 +81,93 @@ class FeeditableContent {
         return $this->blocks;
     }
 
-    public function getFormat(){
-        return $this->format;
+    public function getContentBlockById($id){
+        return $this->blocks[$id] ? $this->blocks[$id] : false;
     }
 
-    public function getEob(){
-        return $this->eob;
+    public function setContentBlockById($id, $content){
+        if($this->blocks[$id]) {
+            // TODO: jason_decode!
+            $this->blocks[$id] = $content.$this->eob;
+
+            // Reindex all blocks
+            $modified = $this->plugin->renderRawContent(implode($this->getContent()), $this->getFormat(), true );
+            $this->setContent($modified);
+
+            return true;
+        }
+        return false;
     }
 
-    /**
-     * @param $content
-     * @param $uid
-     * @return array() numbered paragraphs
-     */
+    public function encodeEditableId($elemId)
+    {
+        if(!($this->pluginConfig['editable_prefix'] && $this->format && $this->segmentid))
+            return false;
+        else
+            return $this->pluginConfig['editable_prefix'].$this->format.'-'.$this->segmentid.'#'.$elemId;
+    }
+
+    public function decodeEditableId($elemId)
+    {
+        list($contenturi, $elemid)      = explode('#', str_replace($this->config['editable_prefix'], '', $elemId));
+        list($contenttype, $contentkey) = explode('-', $contenturi);
+        $currsegmentid                  = $elemid % $this->config['contentBlockDimension'];
+
+        return array(
+            'elemid' => $elemId,
+            'currsegmentid' => $currsegmentid,
+            'contenttype' => $contenttype
+        );
+    }
+
+    public function getEditablesCssConfig($path=null){
+        $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor-icons.css');
+        $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor.css');
+    }
+
+    public function getEditablesJsConfig( $path=null )
+    {
+        $this->plugin->includeBeforeBodyEnds($path.'libs/jquery_jeditable-master/jquery.jeditable.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/underscore/underscore.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/Eventable/eventable.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/sir-trevor.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/locales/de.js');
+        $this->plugin->includeBeforeBodyEnds(
+'<script type="text/javascript" charset="utf-8">'.
+'
+      window.editor = new SirTrevor.Editor({
+        el: $(".sir-trevor"),
+        blockTypes: [
+          "Text",
+          "Heading",
+          "List",
+          "Quote",
+          "Image",
+          "Video",
+          "Tweet"
+        ],
+        defaultType: "Text"
+      });
+      SirTrevor.setDefaults({
+        uploadUrl: "/?cmd=upload"
+      });
+'
+.'</script>'
+        );
+
+    }
+
+    public function upload(){
+        if($_FILES){
+            $uploaddir = dirname($this->plugin->path);
+            $uploadfile = $uploaddir . DS. basename($_FILES['attachment']['name']['file']);
+            if (move_uploaded_file($_FILES['attachment']['tmp_name']['file'], $uploadfile)) {
+                $sirtrevor = '{ "path": "'.$uploadfile.'"}';
+                die($sirtrevor);
+            }
+        }
+    }
+
     private function identifyMarkdownBlocks( $content, $dimensionOffset = 0 )
     {
         $ret        = [];
@@ -215,28 +311,27 @@ class FeeditableContent {
 
         switch($blockType)
         {
-            case 'image':
-                $openBlockTypeInJson = '{"type":"image","data":{"file":{"url":"';
-                $stopBlockTypeInJson = '"}}},';
-                break;
-            
             case 'text':
+            case 'image':
+                $openBlock = $this->{'open'.ucfirst($blockType).'Block'};
+                $stopBlock = $this->{'close'.ucfirst($blockType).'Block'};;
+                break;
             default:
-                $openBlockTypeInJson = '{"type":"text","data":{"text":"';
-                $stopBlockTypeInJson = '"}},';
+                $openBlock = $this->openTextBlock;
+                $stopBlock = $this->stopTextBlock;
         }
 
         switch($mode){
 
             case 'start':
                 $mark = '<!-- ###'.$id.'### Start -->';
-                $this->plugin->setReplacement($mark,$openBlockTypeInJson);
+                $this->plugin->setReplacement($mark,$openBlock);
                 return $eol.$mark.$eol;
                 break;
 
             case 'stop':
                 $mark = '<!-- ###'.$class.'### Stop -->';
-                $this->plugin->setReplacement($mark,$stopBlockTypeInJson);
+                $this->plugin->setReplacement($mark,$stopBlock);
                 return $eol.$mark.$eol;
                 break;
 
@@ -249,14 +344,15 @@ class FeeditableContent {
                 $stopmark  = '<!-- ###'.$class.'### Stop -->';
                 if($this->plugin->getReplacement($startmark)=='')
                 {
-                    $this->plugin->setReplacement($startmark,$openBlockTypeInJson);
+                    $this->plugin->setReplacement($startmark,$openBlock);
                     return $eol.$startmark.$eol;
                 }
                 elseif($this->plugin->getReplacement($stopmark)=='')
                 {
-                    $this->plugin->setReplacement($stopmark,$stopBlockTypeInJson);
+                    $this->plugin->setReplacement($stopmark,$stopBlock);
                     return $eol.$stopmark.$eol;
                 }
         }
     }
+
 } 
