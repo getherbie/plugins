@@ -121,22 +121,19 @@ class FeeditableContent {
     }
 
     public function getEditablesCssConfig($path=null){
-        $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor-icons.css');
         $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor.css');
+        $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor-icons.css');
     }
 
     public function getEditablesJsConfig( $path=null )
     {
-        $this->plugin->includeBeforeBodyEnds($path.'libs/jquery_jeditable-master/jquery.jeditable.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/underscore/underscore.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/Eventable/eventable.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/sir-trevor.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/locales/de.js');
-        $this->plugin->includeBeforeBodyEnds(
+        foreach($this->plugin->segments as $segmentid => $segment)
+        {
+            $this->plugin->includeBeforeBodyEnds(
 '<script type="text/javascript" charset="utf-8">'.
 '
-      window.editor = new SirTrevor.Editor({
-        el: $(".sir-trevor"),
+      window.editor'.$segmentid.' = new SirTrevor.Editor({
+        el: $(".sir-trevor-'.$segmentid.'"),
         blockTypes: [
           "Text",
           "Heading",
@@ -151,10 +148,15 @@ class FeeditableContent {
       SirTrevor.setDefaults({
         uploadUrl: "/?cmd=upload"
       });
-'
-.'</script>'
-        );
-
+'.
+'</script>'
+            );
+        }
+        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/locales/de.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/sir-trevor.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/Eventable/eventable.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/underscore/underscore.js');
+        $this->plugin->includeBeforeBodyEnds($path.'libs/jquery_jeditable-master/jquery.jeditable.js');
     }
 
     public function upload(){

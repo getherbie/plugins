@@ -105,7 +105,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     $this->page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
 
 //                    // 'placeholder' must match the actual segment-wrapper! ( see HerbieExtension::functionContent() )
-                    $jeditable_segment =
+                    $editable_segment =
 //                      // open wrap
 //                      $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap').
                         // wrapped segment
@@ -116,16 +116,16 @@ class FeeditingPlugin extends \Herbie\Plugin
 
                     // render jeditable contents
                     $this->page->setSegments(array(
-                        $currsegmentid => $this->renderEditableContent($jeditable_segment, $contenttype)
+                        $currsegmentid => $this->renderEditableContent($currsegmentid, $editable_segment, $contenttype)
                     ));
                     die($this->app->renderContentSegment($currsegmentid));
                 }
-//                break;
+                break;
 
             case '':
 
                 foreach($this->segments as $id => $_segment){
-                    $this->segments[$id] = $this->renderEditableContent($_segment, 'markdown');
+                    $this->segments[$id] = $this->renderEditableContent($id, $_segment, 'markdown');
                 }
                 $this->page->setSegments($this->segments);
                 break;
@@ -138,7 +138,6 @@ class FeeditingPlugin extends \Herbie\Plugin
     // call document.ready-function in footer
     protected function onOutputGenerated(\Herbie\Event $event )
     {
-
         $_app          = $event->offsetGet('app');
         $_response     = $event->offsetGet('response');
         $_plugin_path  = str_replace($_app['webPath'], '', $_app['config']->get('plugins_path')).'/feediting/';
@@ -161,7 +160,7 @@ class FeeditingPlugin extends \Herbie\Plugin
 
         $debug = substr( $tagOrPath, 0, 1 );
         if($debug == '<'){
-            $this->replace_pairs[$closingtag] .= $tagOrPath.PHP_EOL.$this->replace_pairs[$closingtag];
+            $this->replace_pairs[$closingtag] = $tagOrPath.PHP_EOL.$this->replace_pairs[$closingtag];
             return;
         }
 
@@ -213,7 +212,7 @@ class FeeditingPlugin extends \Herbie\Plugin
      * @param string $format, eg. 'markdown'
      * @return string
      */
-    private function renderEditableContent( $content, $format, $twigged=false )
+    private function renderEditableContent( $contentId, $content, $format, $twigged=false )
     {
         if($twigged)
         {
@@ -231,7 +230,7 @@ class FeeditingPlugin extends \Herbie\Plugin
             $ret = strtr($content, array(PHP_EOL => ''));
         }
 
-        $ret = '<form><textarea class="sir-trevor">{"data":['.$ret.'{}]}</textarea><input type="submit" name="cmd" value="save" class="btn" /></form>';
+        $ret = '<form><textarea class="sir-trevor-'.$contentId.'">{"data":['.$ret.'{}]}</textarea><input type="submit" name="cmd" value="save" class="btn" /></form>';
 
         return $ret;
     }
