@@ -30,13 +30,23 @@ class FeeditableContent {
 
     protected $eob = PHP_EOL;
 
-    protected $openImageBlock = '{"type":"image","data":{"file":{"url":"';
-
-    protected $closeImageBlock = '"}}},';
-
-    protected $openTextBlock = '{"type":"text","data":{"text":"';
-
-    protected $closeTextBlock = '"}},';
+    protected $blockMap = [
+        "headerBlock" => [
+            "template" => '{"type":"text","data":{"text":"%s"}},',
+            "mdsubstr" => '#',
+            "dataregex" => '/.*/'
+        ],
+        "imageBlock" => [
+            "template" => '{"type":"image","data":{"file":{"url":"%s"}}},',
+            "mdsubstr" => '![',
+            "dataregex" => '/\((.*)\)/'
+        ],
+        "textBlock" => [
+            "template" => '{"type":"text","data":{"text":"%s"}},',
+            "mdsubstr" => '',
+            "dataregex" => '/.*/'
+        ],
+    ];
     
     public function __construct(FeeditingPlugin &$plugin, $format, $segmentid = null, $eob = null)
     {
@@ -46,6 +56,18 @@ class FeeditableContent {
 
         if($segmentid) $this->segmentid = $segmentid;
         if($eob) $this->eob = $eob;
+
+        foreach($this->blockMap as $blockId => $blockDef){
+            list($this->{"open".ucfirst($blockId)},$this->{"close".ucfirst($blockId)}) = explode('%s', $blockDef['template']);
+        }
+
+        $this->blockMap = array_merge([
+            "twbmdRowBlock" => [
+                "template" => '%s',
+                "mdsubstr" => '-- row ',
+                "dataregex" => '/.*/'
+            ]
+        ], $this->blockMap);
     }
 
     public function getFormat(){
@@ -159,6 +181,10 @@ class FeeditableContent {
         $this->plugin->includeBeforeBodyEnds($path.'libs/jquery_jeditable-master/jquery.jeditable.js');
     }
 
+    public function getEditableContainer($contentId, $content){
+        return '<form method="post"><input type="submit" name="cmd" value="save" class="btn" /><textarea name="sir-trevor-'.$contentId.'" class="sir-trevor-'.$contentId.'">{"data":['.$content.'{}]}</textarea></form>';
+    }
+
     public function upload(){
         if($_FILES){
             $uploaddir = dirname($this->plugin->path);
@@ -212,54 +238,25 @@ class FeeditableContent {
 
                 default:
 
-                    // don't edit bootstrap-markdown (cont.):
-                    // eg content like "-- row n1,n2,n3,..,n12 --"
-                    if(substr($line, 0, strlen('-- row ')) == '-- row ')
+                    // group defined elements in their own block
+                    foreach($this->blockMap as $b_identifier => $b_def )
                     {
-                        // close previous block
-                        if($blockId)
+                        if(substr($line, 0, strlen($b_def['mdsubstr'])) == $b_def['mdsubstr'])
                         {
-                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
-                            $blockId = 0;
-                            $openBlock = true;
+                            // close previous block
+                            if($blockId)
+                            {
+                                $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
+                                $blockId = 0;
+                                $openBlock = true;
+                            }
+
+                            // just testing
+                            preg_match($b_def['dataregex'], $line, $b_data);
+                            $ret[$lineno] = sprintf($b_def['template'], end($b_data));
+
+                            continue 2;
                         }
-
-                        // continue reading
-                        $ret[$lineno] = $line.$eol;
-                        continue;
-                    }
-
-                    // group some elements in their own block, eg header:
-                    if(substr($line, 0, strlen('#')) == '#')
-                    {
-                        // close previous block
-                        if($blockId)
-                        {
-                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
-                            $blockId = 0;
-                            $openBlock = true;
-                        }
-
-                        // continue reading
-                        $ret[$lineno] = $line.$eol;
-                        continue;
-
-                    }
-
-                    // group some elements in their own block, eg. SirTrevor-ImageBlock
-                    if(substr($line, 0, strlen('![')) == '![')
-                    {
-                        // close previous block
-                        if($blockId)
-                        {
-                            $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
-                            $blockId = 0;
-                            $openBlock = true;
-                        }
-
-                        // just testing
-                        $ret[$lineno] = '{"type":"image","data":{"file":{"url":"http://netzweberei.getherbie.localhost/site/pages/Bildschirmfoto.png"}}},';
-                        continue;
                     }
 
                     if($openBlock)
@@ -320,7 +317,7 @@ class FeeditableContent {
                 break;
             default:
                 $openBlock = $this->openTextBlock;
-                $stopBlock = $this->stopTextBlock;
+                $stopBlock = $this->closeTextBlock;
         }
 
         switch($mode){

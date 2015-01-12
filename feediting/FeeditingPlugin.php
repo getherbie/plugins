@@ -127,6 +127,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                 foreach($this->segments as $id => $_segment){
                     $this->segments[$id] = $this->renderEditableContent($id, $_segment, 'markdown');
                 }
+
                 $this->page->setSegments($this->segments);
                 break;
 
@@ -230,9 +231,7 @@ class FeeditingPlugin extends \Herbie\Plugin
             $ret = strtr($content, array(PHP_EOL => ''));
         }
 
-        $ret = '<form><textarea class="sir-trevor-'.$contentId.'">{"data":['.$ret.'{}]}</textarea><input type="submit" name="cmd" value="save" class="btn" /></form>';
-
-        return $ret;
+        return $this->editableContent[$contentId]->getEditableContainer($contentId, $ret);
     }
 
     private function defineLineFeed($format, $eol)
