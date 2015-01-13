@@ -11,7 +11,6 @@
 
 namespace herbie\plugin\feediting\classes;
 
-
 use herbie\plugin\feediting\FeeditingPlugin;
 
 class FeeditableContent {
@@ -30,23 +29,7 @@ class FeeditableContent {
 
     protected $eob = PHP_EOL;
 
-    protected $blockMap = [
-        "headerBlock" => [
-            "template" => '{"type":"text","data":{"text":"%s"}},',
-            "mdsubstr" => '#',
-            "dataregex" => '/.*/'
-        ],
-        "imageBlock" => [
-            "template" => '{"type":"image","data":{"file":{"url":"%s"}}},',
-            "mdsubstr" => '![',
-            "dataregex" => '/\((.*)\)/'
-        ],
-        "textBlock" => [
-            "template" => '{"type":"text","data":{"text":"%s"}},',
-            "mdsubstr" => '',
-            "dataregex" => '/.*/'
-        ],
-    ];
+    protected $contentBlocks = [];
     
     public function __construct(FeeditingPlugin &$plugin, $format, $segmentid = null, $eob = null)
     {
@@ -57,17 +40,28 @@ class FeeditableContent {
         if($segmentid) $this->segmentid = $segmentid;
         if($eob) $this->eob = $eob;
 
-        foreach($this->blockMap as $blockId => $blockDef){
+        foreach($this->contentBlocks as $blockId => $blockDef){
             list($this->{"open".ucfirst($blockId)},$this->{"close".ucfirst($blockId)}) = explode('%s', $blockDef['template']);
         }
 
-        $this->blockMap = array_merge([
-            "twbmdRowBlock" => [
-                "template" => '%s',
-                "mdsubstr" => '-- row ',
-                "dataregex" => '/.*/'
-            ]
-        ], $this->blockMap);
+        $this->contentBlocks = array_merge([
+            "exclude-1" => [
+                "mdregex" => '/^-- row .*/',
+                "template" => '',
+            ],
+            "exclude-2" => [
+                "mdregex" => '/^-- end --$/',
+                "template" => '',
+            ],
+            "exclude-3" => [
+                "mdregex" => '/^----$/',
+                "template" => '',
+            ],
+            "exclude-4" => [
+                "mdregex" => '/^$/',
+                "template" => '',
+            ],
+        ], $this->contentBlocks);
     }
 
     public function getFormat(){
@@ -142,10 +136,7 @@ class FeeditableContent {
         );
     }
 
-    public function getEditablesCssConfig($path=null){
-        $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor.css');
-        $this->plugin->includeIntoHeader($path.'libs/sir-trevor-js/sir-trevor-icons.css');
-    }
+    public function getEditablesCssConfig($path=null){}
 
     public function getEditablesJsConfig( $path=null )
     {
@@ -153,47 +144,15 @@ class FeeditableContent {
         {
             $this->plugin->includeBeforeBodyEnds(
 '<script type="text/javascript" charset="utf-8">'.
-'
-      window.editor'.$segmentid.' = new SirTrevor.Editor({
-        el: $(".sir-trevor-'.$segmentid.'"),
-        blockTypes: [
-          "Text",
-          "Heading",
-          "List",
-          "Quote",
-          "Image",
-          "Video",
-          "Tweet"
-        ],
-        defaultType: "Text"
-      });
-      SirTrevor.setDefaults({
-        uploadUrl: "/?cmd=upload"
-      });
-'.
+''.
 '</script>'
             );
         }
-        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/locales/de.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/sir-trevor-js/sir-trevor.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/Eventable/eventable.js');
-        $this->plugin->includeBeforeBodyEnds($path.'libs/underscore/underscore.js');
         $this->plugin->includeBeforeBodyEnds($path.'libs/jquery_jeditable-master/jquery.jeditable.js');
     }
 
     public function getEditableContainer($contentId, $content){
-        return '<form method="post"><input type="submit" name="cmd" value="save" class="btn" /><textarea name="sir-trevor-'.$contentId.'" class="sir-trevor-'.$contentId.'">{"data":['.$content.'{}]}</textarea></form>';
-    }
-
-    public function upload(){
-        if($_FILES){
-            $uploaddir = dirname($this->plugin->path);
-            $uploadfile = $uploaddir . DS. basename($_FILES['attachment']['name']['file']);
-            if (move_uploaded_file($_FILES['attachment']['tmp_name']['file'], $uploadfile)) {
-                $sirtrevor = '{ "path": "'.$uploadfile.'"}';
-                die($sirtrevor);
-            }
-        }
+        return '<form method="post"></form>';
     }
 
     private function identifyMarkdownBlocks( $content, $dimensionOffset = 0 )
@@ -211,50 +170,33 @@ class FeeditableContent {
         {
             // index + 100 so we have enough "space" to create new blocks "on-the-fly" when editing the page
             $lineno = $ctr * $this->blockDimension + $dimensionOffset;
-
-//            // respect content-segments (TODO: do we still need this?)
-//            if(preg_match('/--- (.*) ---/', $line)) $this->segmentid++;
             $lineno = $lineno + $this->segmentid;
 
             switch($line)
             {
-                // don't edit bootstrap-markdown...
-                case "----":
-                case "-- end --":
-                    // ...and blank lines
-                case "":
-
-                    // close previous block
-                    if($blockId)
-                    {
-                        $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
-                        $blockId = 0;
-                        $openBlock = true;
-                    }
-
-                    // continue reading
-                    $ret[$lineno] = ( $ctr == count($lines)-1 ) ? $line : $line.$eol;
-                    break;
-
                 default:
 
                     // group defined elements in their own block
-                    foreach($this->blockMap as $b_identifier => $b_def )
+                    foreach($this->contentBlocks as $b_def )
                     {
-                        if(substr($line, 0, strlen($b_def['mdsubstr'])) == $b_def['mdsubstr'])
-                        {
-                            // close previous block
-                            if($blockId)
-                            {
+                        if(preg_match($b_def['mdregex'], $line, $test)){
+
+                            if($blockId) {
+                                // close previous block
                                 $ret[$blockId] .= ($this->segmentid === false) ? '' : $this->setEditableTag($blockId, $class, 'stop', MARKDOWN_EOL);
                                 $blockId = 0;
                                 $openBlock = true;
                             }
 
-                            // just testing
-                            preg_match($b_def['dataregex'], $line, $b_data);
-                            $ret[$lineno] = sprintf($b_def['template'], end($b_data));
-
+                            if($b_def['template'] !== ''){
+                                // build block
+                                preg_match($b_def['dataregex'], $line, $b_data);
+                                $ret[$lineno] = sprintf($b_def['template'], end($b_data));
+                            } else {
+                                // don't build an editable block, eg. bootstrap-markdown's
+                                $ret[$lineno] = ( $ctr == count($lines)-1 ) ? $line : $line.$eol;
+                            }
+                            // continue reading
                             continue 2;
                         }
                     }

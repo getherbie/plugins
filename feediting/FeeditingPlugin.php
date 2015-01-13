@@ -11,7 +11,7 @@
 
 namespace herbie\plugin\feediting;
 
-use herbie\plugin\feediting\classes\FeeditableContent;
+//use herbie\plugin\feediting\classes;
 use Twig_Loader_String;
 
 class FeeditingPlugin extends \Herbie\Plugin
@@ -28,6 +28,8 @@ class FeeditingPlugin extends \Herbie\Plugin
 
     protected $editableContent = [];
 
+    private $editor = 'Feeditable';
+
     public function __construct(\Herbie\Application $app)
     {
         parent::__construct($app);
@@ -40,13 +42,14 @@ class FeeditingPlugin extends \Herbie\Plugin
         $this->config['editable_prefix'] = 'editable_';
         $this->config['contentBlockDimension'] = 100;
 
+        // set editor
+        $this->editor = 'SirTrevor';
+
     }
 
     // fetch markdown-contents for jeditable
     protected function onPageLoaded(\Herbie\Event $event )
     {
-        $_editableContent = array();
-
         // Disable Caching while editing
         $this->app['twig']->environment->setCache(false);
 
@@ -62,7 +65,8 @@ class FeeditingPlugin extends \Herbie\Plugin
 
         foreach($this->segments as $segmentid => $_staticContent)
         {
-            $this->editableContent[$segmentid] = new FeeditableContent($this, $this->page->format, $segmentid);
+            $contentEditor = "herbie\\plugin\\feediting\\classes\\{$this->editor}Content";
+            $this->editableContent[$segmentid] = new $contentEditor($this, $this->page->format, $segmentid);
             
             if(trim($_staticContent)=='')
             {
@@ -71,7 +75,6 @@ class FeeditingPlugin extends \Herbie\Plugin
             else
             {
                 $this->editableContent[$segmentid]->setContent($_staticContent);
-
                 $this->segments[$segmentid] = $this->editableContent[$segmentid]->getSegment();
             }
         };
@@ -82,15 +85,16 @@ class FeeditingPlugin extends \Herbie\Plugin
             case 'save':
                 if( isset($_POST['id']) )
                 {
-                    // get $elemid, $currsegementid(!) and $contenttype
+                    // get $elemid, $currsegmentid(!) and $contenttype
                     extract($this->editableContent[0]->decodeEditableId($_POST['id']));
 
-                    if( $this->editableContent[$currsegmentid]->getContentBlockById() )
+                    if( $this->editableContent[$currsegmentid]->getContentBlockById($elemid) )
                     {
-                        $this->editableContent[$currsegmentid]->setContentBlockById($elemid, (string) $_POST['value']);
+                        $this->editableContent[$currsegmentid]->setContentBlockById($elemid, (string) $_POST[$elemid]);
 
+                        $fheader = $this->getContentfileHeader();
                         $fh = fopen($this->path, 'w');
-                        fputs($fh, $this->getContentfileHeader());
+                        fputs($fh, $fheader);
                         foreach($this->segments as $segmentid => $_staticContent){
                             if( $segmentid > 0 ) {
                                 fputs($fh, "--- {$segmentid} ---".PHP_EOL);
@@ -227,7 +231,7 @@ class FeeditingPlugin extends \Herbie\Plugin
         }
         else
         {
-            $ret = strtr($content, $this->replace_pairs);
+            //$ret = strtr($content, $this->replace_pairs);
             $ret = strtr($content, array(PHP_EOL => ''));
         }
 
@@ -276,6 +280,10 @@ class FeeditingPlugin extends \Herbie\Plugin
 
     public function includeIntoHeader($tagOrPath){
         $this->includeIntoTag('</head>', $tagOrPath);
+    }
+
+    public function includeAfterBodyStarts($tagOrPath){
+        $this->includeIntoTag('<body>', $tagOrPath);
     }
 
     public function includeBeforeBodyEnds($tagOrPath){
