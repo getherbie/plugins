@@ -138,7 +138,7 @@ class FeeditingPlugin extends \Herbie\Plugin
 
             default:
 
-                $this->editableContent->{$_cmd}();
+                $this->editableContent[0]->{$_cmd}();
         }
     }
 

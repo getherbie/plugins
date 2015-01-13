@@ -505,5 +505,9 @@ ul.st-text-block {
 .st-format-btn--Unlink {
   text-decoration: line-through; }
 
-.st-submit {
- width: 100%; }
+.st-submit,
+.st-submit input[type=submit] {
+ width: 100%;
+ color: #ffffff;
+ background-color: #34e0c2;
+ border: 0px; }

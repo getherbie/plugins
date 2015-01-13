@@ -62,7 +62,7 @@ class SirTrevorContent extends FeeditableContent {
           "Quote",
           "Image",
           "Video",
-          "Tweet"
+          //"Tweet"
         ],
         defaultType: "Text"
       });
@@ -81,9 +81,9 @@ class SirTrevorContent extends FeeditableContent {
 
     public function getEditableContainer($contentId, $content){
         return
-            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="btn btn-small" ></input></div>'.
+            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="top" ></input></div>'.
             '<textarea name="sirtrevor-'.$contentId.'" class="sirtrevor-'.$contentId.'">'.sprintf($this->contentContainer, $content).'</textarea>'.
-            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="btn btn-small"></input></div>';
+            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="bottom"></input></div>';
     }
 
     public function decodeEditableId($elemId)
@@ -172,7 +172,8 @@ class SirTrevorContent extends FeeditableContent {
             $uploadfile = $uploaddir . DS. basename($_FILES['attachment']['name']['file']);
             if (move_uploaded_file($_FILES['attachment']['tmp_name']['file'], $uploadfile))
             {
-                $sirtrevor = '{ "path": "'.$uploadfile.'"}';
+                $relpath = strtr($uploadfile, array($this->plugin->alias->get('@site') => '/site'));
+                $sirtrevor = '{ "file": { "url" : "'.$relpath.'" } }';
                 die($sirtrevor);
             }
         }
