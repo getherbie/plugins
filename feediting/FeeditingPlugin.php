@@ -61,31 +61,16 @@ class FeeditingPlugin extends \Herbie\Plugin
         $this->page->setLoader(new \Herbie\Loader\PageLoader($this->alias));
         $this->page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
 
-        $this->segments = $this->page->getSegments();
-
-        foreach($this->segments as $segmentid => $_staticContent)
-        {
-            $contentEditor = "herbie\\plugin\\feediting\\classes\\{$this->editor}Content";
-            $this->editableContent[$segmentid] = new $contentEditor($this, $this->page->format, $segmentid);
-            
-            if(trim($_staticContent)=='')
-            {
-                $_staticContent = PHP_EOL.'Click to edit'.PHP_EOL;
-            }
-            else
-            {
-                $this->editableContent[$segmentid]->setContent($_staticContent);
-                $this->segments[$segmentid] = $this->editableContent[$segmentid]->getSegment();
-            }
-        };
+        $this->loadEditableSegments();
 
         $_cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
         switch($_cmd)
         {
             case 'save':
+
                 if( isset($_POST['id']) )
                 {
-                    // get $elemid, $currsegmentid(!) and $contenttype
+                    /* get $elemid, $currsegmentid(!) and $contenttype */
                     extract($this->editableContent[0]->decodeEditableId($_POST['id']));
 
                     if( $this->editableContent[$currsegmentid]->getContentBlockById($elemid) )
@@ -105,24 +90,41 @@ class FeeditingPlugin extends \Herbie\Plugin
                         fclose($fh);
                     }
 
-                    // reload page after saving
+                    // reload contents after saving
                     $this->page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
 
-//                    // 'placeholder' must match the actual segment-wrapper! ( see HerbieExtension::functionContent() )
-                    $editable_segment =
-//                      // open wrap
-//                      $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap').
-                        // wrapped segment
-                        $this->editableContent[$segmentid]->getSegment().
-//                      // close wrap
-//                      .$this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
-                    '';
+                    if($this->editableContent[$segmentid]->reloadPageAfterSave === true)
+                    {
+                        $this->loadEditableSegments();
+                        foreach($this->segments as $id => $_segment){
+                            $this->segments[$id] = $this->renderEditableContent($id, $_segment, 'markdown');
+                        }
+                        $this->page->setSegments($this->segments);
+                        break;
+                    }
+                    else // deliver partial content for ajax-request
+                    {
+//                      // 'placeholder' must match the actual segment-wrapper! ( see HerbieExtension::functionContent() )
+                        $editable_segment =
 
-                    // render jeditable contents
-                    $this->page->setSegments(array(
-                        $currsegmentid => $this->renderEditableContent($currsegmentid, $editable_segment, $contenttype)
-                    ));
-                    die($this->app->renderContentSegment($currsegmentid));
+//                          // open wrap
+//                      $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap').
+
+                            // wrapped segment
+                        $this->editableContent[$segmentid]->getSegment().
+//
+                            // close wrap
+//                      .$this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
+
+                        '';
+
+                        // render jeditable contents
+                        $this->page->setSegments(array(
+                            $currsegmentid => $this->renderEditableContent($currsegmentid, $editable_segment, $contenttype)
+                        ));
+
+                        die($this->app->renderContentSegment($currsegmentid));
+                    }
                 }
                 break;
 
@@ -131,11 +133,11 @@ class FeeditingPlugin extends \Herbie\Plugin
                 foreach($this->segments as $id => $_segment){
                     $this->segments[$id] = $this->renderEditableContent($id, $_segment, 'markdown');
                 }
-
                 $this->page->setSegments($this->segments);
                 break;
 
             default:
+
                 $this->editableContent->{$_cmd}();
         }
     }
@@ -198,6 +200,27 @@ class FeeditingPlugin extends \Herbie\Plugin
 
     private function getEditablesJsConfig( $pluginPath ){
         return $this->editableContent[0]->getEditablesJsConfig( $pluginPath );
+    }
+
+    private function loadEditableSegments(){
+
+        $this->segments = $this->page->getSegments();
+
+        foreach($this->segments as $segmentid => $_staticContent)
+        {
+            $contentEditor = "herbie\\plugin\\feediting\\classes\\{$this->editor}Content";
+            $this->editableContent[$segmentid] = new $contentEditor($this, $this->page->format, $segmentid);
+
+            if(trim($_staticContent)=='')
+            {
+                $_staticContent = PHP_EOL.'Click to edit'.PHP_EOL;
+            }
+            else
+            {
+                $this->editableContent[$segmentid]->setContent($_staticContent);
+                $this->segments[$segmentid] = $this->editableContent[$segmentid]->getSegment();
+            }
+        };
     }
 
     /**

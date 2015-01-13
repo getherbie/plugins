@@ -15,6 +15,8 @@ use herbie\plugin\feediting\FeeditingPlugin;
 
 class FeeditableContent {
 
+    public $reloadPageAfterSave = false;
+
     protected $blocks = [];
 
     protected $format = '';

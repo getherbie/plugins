@@ -504,3 +504,6 @@ ul.st-text-block {
 
 .st-format-btn--Unlink {
   text-decoration: line-through; }
+
+.st-submit {
+ width: 100%; }

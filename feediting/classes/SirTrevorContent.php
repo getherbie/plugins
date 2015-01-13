@@ -15,6 +15,8 @@ use herbie\plugin\feediting\FeeditingPlugin;
 
 class SirTrevorContent extends FeeditableContent {
 
+    public $reloadPageAfterSave = true;
+
     protected $contentBlocks = [
         "headerBlock" => [
             "template" => '{"type":"text","data":{"text":"%s"}},',
@@ -79,8 +81,9 @@ class SirTrevorContent extends FeeditableContent {
 
     public function getEditableContainer($contentId, $content){
         return
+            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="btn btn-small" ></input></div>'.
             '<textarea name="sirtrevor-'.$contentId.'" class="sirtrevor-'.$contentId.'">'.sprintf($this->contentContainer, $content).'</textarea>'.
-            '<input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="btn btn-small">';
+            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="btn btn-small"></input></div>';
     }
 
     public function decodeEditableId($elemId)
@@ -133,7 +136,10 @@ class SirTrevorContent extends FeeditableContent {
 
     private function json2array($json){
 
-        $content = json_decode($json);
+        $content = json_decode(strtr($json, array(
+            '\\n' => '',
+            '\\' => '',
+        )));
         if(isset($content->data))
         {
             foreach($content->data as $block)
