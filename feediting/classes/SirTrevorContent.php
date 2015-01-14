@@ -22,10 +22,10 @@ class SirTrevorContent extends FeeditableContent {
     public $editableEmptySegmentContent = PHP_EOL;
 
     protected $contentBlocks = [
-        "headerBlock" => [
-            "template" => '{"type":"text","data":{"text":"%s"}},',
+        "headingBlock" => [
+            "template" => '{"type":"heading","data":{"text":"%s"}},',
             "mdregex" => '/^#/',
-            "dataregex" => '/.*/'
+            "dataregex" => '/([^#].*)/'
         ],
         "imageBlock" => [
             "template" => '{"type":"image","data":{"file":{"url":"%s"}}},',
@@ -85,7 +85,7 @@ class SirTrevorContent extends FeeditableContent {
 
     public function getEditableContainer($contentId, $content){
         return
-            '<div class="st-submit"><input type="submit" value="click to save changes" class="top" ><input type="hidden" name="id" value="sirtrevor-'.$contentId.'" ></input></div>'.
+            (($contentId == 0) ? '<div class="st-submit"><input type="submit" value="click to save changes" class="top" ><input type="hidden" name="id" value="sirtrevor-'.$contentId.'" ></input></div>': '').
             '<textarea name="sirtrevor-'.$contentId.'" class="sirtrevor-'.$contentId.'">'.sprintf($this->contentContainer, $content).'</textarea>'.
             '';
     }
@@ -161,6 +161,9 @@ class SirTrevorContent extends FeeditableContent {
                     {
                         case 'image':
                             $blocks[] = '!['.basename($_block->data->file->url).']('.$_block->data->file->url.')'.PHP_EOL;
+                            break;
+                        case 'heading':
+                            $blocks[] = '#'.strtr($_block->data->text, array(PHP_EOL => '')).PHP_EOL;
                             break;
                         case 'text':
                         default:

@@ -34,7 +34,7 @@ class FeeditingPlugin extends \Herbie\Plugin
         parent::__construct($app);
 
         // TODO: Implement some kind of authentication!
-        $this->authenticated = true;
+        $this->authenticated = false;
 
         // set defaults
         $this->config['contentSegment_WrapperPrefix'] = 'placeholder-';
