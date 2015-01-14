@@ -17,6 +17,8 @@ class SirTrevorContent extends FeeditableContent {
 
     public $reloadPageAfterSave = true;
 
+    public $editableEmptySegmentContent = PHP_EOL;
+
     protected $contentBlocks = [
         "headerBlock" => [
             "template" => '{"type":"text","data":{"text":"%s"}},',
@@ -136,32 +138,33 @@ class SirTrevorContent extends FeeditableContent {
 
     private function json2array($json){
 
+        $blocks = array();
         $content = json_decode(strtr($json, array(
             '\\n' => '',
             '\\' => '',
         )));
         if(isset($content->data))
         {
-            foreach($content->data as $block)
+            foreach($content->data as $_block)
             {
-                $_blocks[] = PHP_EOL;
-                if(isset($block->type))
+                $blocks[] = PHP_EOL;
+                if(isset($_block->type))
                 {
-                    switch($block->type)
+                    switch($_block->type)
                     {
                         case 'image':
-                            $_blocks[] = '!['.basename($block->data->file->url).']('.$block->data->file->url.')'.PHP_EOL;
+                            $blocks[] = '!['.basename($_block->data->file->url).']('.$_block->data->file->url.')'.PHP_EOL;
                             break;
                         case 'text':
                         default:
-                            $_blocks[] = strtr($block->data->text, array(PHP_EOL => '')).PHP_EOL;
+                            $blocks[] = strtr($_block->data->text, array(PHP_EOL => '')).PHP_EOL;
                             break;
                     }
                 }
 
             }
         }
-        return $_blocks;
+        return $blocks;
     }
 
     public function upload(){

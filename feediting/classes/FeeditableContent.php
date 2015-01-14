@@ -17,6 +17,8 @@ class FeeditableContent {
 
     public $reloadPageAfterSave = false;
 
+    public $editableEmptySegmentContent = "\nclick to edit\n";
+
     protected $blocks = [];
 
     protected $format = '';

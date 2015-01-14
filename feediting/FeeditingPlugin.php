@@ -206,20 +206,22 @@ class FeeditingPlugin extends \Herbie\Plugin
 
         $this->segments = $this->page->getSegments();
 
+        if( !array_key_exists('0', $this->segments) ){
+            $this->segments = array_merge(array('0' => PHP_EOL), $this->segments);
+        }
+
         foreach($this->segments as $segmentid => $_staticContent)
         {
             $contentEditor = "herbie\\plugin\\feediting\\classes\\{$this->editor}Content";
             $this->editableContent[$segmentid] = new $contentEditor($this, $this->page->format, $segmentid);
 
-            if(trim($_staticContent)=='')
+            if(trim($_staticContent)=='' || trim($_staticContent)==PHP_EOL)
             {
-                $_staticContent = PHP_EOL.'Click to edit'.PHP_EOL;
+                $_staticContent = $this->editableContent[$segmentid]->editableEmptySegmentContent;
             }
-            else
-            {
-                $this->editableContent[$segmentid]->setContent($_staticContent);
-                $this->segments[$segmentid] = $this->editableContent[$segmentid]->getSegment();
-            }
+
+            $this->editableContent[$segmentid]->setContent($_staticContent);
+            $this->segments[$segmentid] = $this->editableContent[$segmentid]->getSegment();
         };
     }
 
