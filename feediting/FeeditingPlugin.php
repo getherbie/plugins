@@ -11,7 +11,6 @@
 
 namespace herbie\plugin\feediting;
 
-//use herbie\plugin\feediting\classes;
 use Twig_Loader_String;
 
 class FeeditingPlugin extends \Herbie\Plugin
