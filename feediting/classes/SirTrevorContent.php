@@ -15,6 +15,8 @@ use herbie\plugin\feediting\FeeditingPlugin;
 
 class SirTrevorContent extends FeeditableContent {
 
+    public $collectAllChanges = true;
+
     public $reloadPageAfterSave = true;
 
     public $editableEmptySegmentContent = PHP_EOL;
@@ -83,9 +85,14 @@ class SirTrevorContent extends FeeditableContent {
 
     public function getEditableContainer($contentId, $content){
         return
-            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="top" ></input></div>'.
+            '<div class="st-submit"><input type="submit" value="click to save changes" class="top" ><input type="hidden" name="id" value="sirtrevor-'.$contentId.'" ></input></div>'.
             '<textarea name="sirtrevor-'.$contentId.'" class="sirtrevor-'.$contentId.'">'.sprintf($this->contentContainer, $content).'</textarea>'.
-            '<div class="st-submit"><input type="submit" name="id" value="sirtrevor-'.$contentId.'" class="bottom"></input></div>';
+            '';
+    }
+
+    public function encodeEditableId($elemId)
+    {
+        return 'sirtrevor-'.$elemId;
     }
 
     public function decodeEditableId($elemId)

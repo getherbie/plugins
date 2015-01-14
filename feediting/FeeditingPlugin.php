@@ -71,12 +71,10 @@ class FeeditingPlugin extends \Herbie\Plugin
                 if( isset($_POST['id']) )
                 {
                     /* get $elemid, $currsegmentid(!) and $contenttype */
-                    extract($this->editableContent[0]->decodeEditableId($_POST['id']));
+                    extract($this->collectChanges());
 
-                    if( $this->editableContent[$currsegmentid]->getContentBlockById($elemid) )
+                    if( $currsegmentid !== false )
                     {
-                        $this->editableContent[$currsegmentid]->setContentBlockById($elemid, (string) $_POST[$elemid]);
-
                         $fheader = $this->getContentfileHeader();
                         $fh = fopen($this->path, 'w');
                         fputs($fh, $fheader);
@@ -93,7 +91,7 @@ class FeeditingPlugin extends \Herbie\Plugin
                     // reload contents after saving
                     $this->page->load($this->app['urlMatcher']->match($this->app['route'])->getPath());
 
-                    if($this->editableContent[$segmentid]->reloadPageAfterSave === true)
+                    if($this->editableContent[$currsegmentid]->reloadPageAfterSave === true)
                     {
                         $this->loadEditableSegments();
                         foreach($this->segments as $id => $_segment){
@@ -111,7 +109,7 @@ class FeeditingPlugin extends \Herbie\Plugin
 //                      $this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap').
 
                             // wrapped segment
-                        $this->editableContent[$segmentid]->getSegment().
+                        $this->editableContent[$currsegmentid]->getSegment().
 //
                             // close wrap
 //                      .$this->setEditableTag($currsegmentid, $currsegmentid, $placeholder=$this->config['contentSegment_WrapperPrefix'].$currsegmentid, 'wrap')
@@ -297,6 +295,39 @@ class FeeditingPlugin extends \Herbie\Plugin
         fclose($fh);
 
         return $fheader;
+    }
+
+    private function collectChanges(){
+
+        if(!$this->editableContent[0]){
+            return false;
+        }
+
+        /* get $elemid, $currsegmentid(!) and $contenttype */
+        extract($this->editableContent[0]->decodeEditableId($_POST['id']));
+
+        if($this->editableContent[$currsegmentid]->collectAllChanges === true)
+        {
+            foreach($this->editableContent as $_segmentid => $_segmentcontent)
+            {
+                $_elemid = $this->editableContent[$_segmentid]->encodeEditableId($_segmentid);
+                if(!$_POST[$_elemid] || !$this->editableContent[$_segmentid]->setContentBlockById($_elemid, (string) $_POST[$_elemid])){
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            if(!$this->editableContent[$currsegmentid]->setContentBlockById($elemid, (string) $_POST[$elemid])){
+                return false;
+            }
+        }
+
+        return array(
+            'elemid'        => $elemid,
+            'currsegmentid' => $currsegmentid,
+            '$contenttype'  => $contenttype
+        );
     }
 
     public function getConfig(){

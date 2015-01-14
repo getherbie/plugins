@@ -15,6 +15,8 @@ use herbie\plugin\feediting\FeeditingPlugin;
 
 class FeeditableContent {
 
+    public $collectAllChanges = false;
+
     public $reloadPageAfterSave = false;
 
     public $editableEmptySegmentContent = "\nclick to edit\n";

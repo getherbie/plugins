@@ -511,3 +511,8 @@ ul.st-text-block {
  color: #ffffff;
  background-color: #34e0c2;
  border: 0px; }
+
+.st-submit input[type=submit].top {
+ position: fixed;
+ top: 0;
+ left: 0; }
