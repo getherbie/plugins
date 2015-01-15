@@ -5,8 +5,7 @@
     "keywords": ["herbie", "plugin", "in-page-editing"],
     "type": "herbie-plugin",
     "require": {
-        "getherbie/herbie": "dev-master",
-        "ntzwbr/jeditable": "dev-master"
+        "getherbie/herbie": "dev-master"
     },
     "autoload": {
         "psr-4": {
