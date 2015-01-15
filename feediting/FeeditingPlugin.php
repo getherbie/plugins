@@ -34,7 +34,7 @@ class FeeditingPlugin extends \Herbie\Plugin
         parent::__construct($app);
 
         // TODO: Implement some kind of authentication!
-        $this->authenticated = false;
+        $this->authenticated = true;
 
         // set defaults
         $this->config['contentSegment_WrapperPrefix'] = 'placeholder-';
@@ -144,7 +144,8 @@ class FeeditingPlugin extends \Herbie\Plugin
     {
         $_app          = $event->offsetGet('app');
         $_response     = $event->offsetGet('response');
-        $_plugin_path  = str_replace($_app['webPath'], '', $_app['config']->get('plugins_path')).'/feediting/';
+        $_plugins      = $_app['config']->get('plugins');
+        $_plugin_path  = str_replace($_app['webPath'], '', $_plugins['path']).'/feediting/';
 
         $this->getEditablesCssConfig($_plugin_path);
 
