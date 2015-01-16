@@ -19,12 +19,11 @@ Danach aktivierst du das Plugin in der Konfigurationsdatei.
 ## Anwendung
 
 Mit der folgenden Twig-Funktion kannst du jedes Gist-Snippet einbinden. Beispiel:
-        
+
     {{ gist id="12345" }}
 
-Wobei '12345' the ID des gewünschten Gist ist.
+Wobei "12345" die ID des gewünschten Gist ist.
 
 Für eine bestimmte Datei innerhalb eines Gist kannst Du einen Dateinamen angeben.
 
     {{ gist id="12345" file="filename.md" }}
-        
