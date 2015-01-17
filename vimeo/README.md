@@ -40,3 +40,8 @@ width       | Die Breite des Videos in Pixel        | int       | 480
 height      | Die Höhe des Videos in Pixel          | int       | 320
 responsive  | Definiert ob das Video responsiv ist  | bool      | true
 
+
+Demo
+----
+
+<http://getherbie.org/blog/2014/05/21-vimeo-responsive-videos>
