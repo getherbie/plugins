@@ -42,3 +42,8 @@ Das Plugin stellt den Tag *{% code %}* zur Verfügung, den du in Seiten nutzen k
     if __name__ == '__main__':
         main()
     {% endcode %}
+
+
+## Demo
+
+<http://getherbie.org/dokumentation/plugins/highlight>
