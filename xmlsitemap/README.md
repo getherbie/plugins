@@ -18,3 +18,8 @@ Danach aktivierst du das Plugin in der Konfigurationsdatei.
         enable:
             - xmlsitemap
 
+
+Demo
+----
+
+<http://getherbie.org/sitemap.xml>
