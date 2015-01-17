@@ -13,11 +13,14 @@ Fertig!
 
 Aktuell stehen folgende Plugins zur Verfügung:
 
+* [Adminpanel](adminpanel)
 * [Disqus](disqus)
+* [Gist](gist)
 * [Google Maps](googlemaps)
 * [Highlight](highlight)
 * [Imagine](imagine)
 * [Lipsum](lipsum)
+* [Random](random)
 * [RSS-Feed](rssfeed)
 * [Shortcode](shortcode)
 * [Simple Contact](simplecontact)
