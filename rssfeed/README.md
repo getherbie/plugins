@@ -18,3 +18,7 @@ Danach aktivierst du das Plugin in der Konfigurationsdatei.
         enable:
             - rssfeed
 
+Demo
+----
+
+<http://getherbie.org/feed.rss>
