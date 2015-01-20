@@ -41,3 +41,8 @@ class | Das `class` HTML-Attribut | string | gmap
 zoom | Der Zoomfaktor | int | 15
 address | Die Adresse, die geokodiert werden soll | string | 
 
+
+Demo
+----
+
+<http://getherbie.org/blog/2015/01/20-googlemaps-plugin>
