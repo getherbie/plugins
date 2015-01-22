@@ -1,0 +1,11 @@
+{
+    "name": "getherbie/plugin-grid",
+    "homepage": "http://www.getherbie.org",
+    "description": "Herbie Grid Plugin.",
+    "keywords": ["herbie", "plugin", "grid"],
+    "type": "herbie-plugin",
+    "license": "BSD-3-Clause",
+    "require": {
+        "getherbie/herbie": "dev-master"
+    }
+}
