@@ -16,6 +16,7 @@ Aktuell stehen folgende Plugins zur Verfügung:
 * [Adminpanel](adminpanel)
 * [Disqus](disqus)
 * [Gist](gist)
+* [Grid](grid)
 * [Google Maps](googlemaps)
 * [Highlight](highlight)
 * [Imagine](imagine)

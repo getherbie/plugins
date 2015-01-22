@@ -13,6 +13,7 @@ the process of managing one-way read-only subtree splits.
         disqus/:https://github.com/getherbie/plugin-disqus.git
         form/:https://github.com/getherbie/plugin-form.git
         gist/:https://github.com/getherbie/plugin-gist.git
+        grid/:https://github.com/getherbie/plugin-grid.git
         googlemaps/:https://github.com/getherbie/plugin-googlemaps.git
         highlight/:https://github.com/getherbie/plugin-highlight.git
         imagine/:https://github.com/getherbie/plugin-imagine.git
