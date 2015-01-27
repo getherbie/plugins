@@ -12,6 +12,7 @@
 namespace herbie\plugin\feediting;
 
 use Twig_Loader_String;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 class FeeditingPlugin extends \Herbie\Plugin
 {
@@ -29,12 +30,16 @@ class FeeditingPlugin extends \Herbie\Plugin
 
     private $editor = 'Feeditable';
 
+    protected $session;
+
     public function __construct(\Herbie\Application $app)
     {
         parent::__construct($app);
 
         // TODO: Implement some kind of authentication!
-        $this->authenticated = true;
+        //$this->session = new Session();
+        //$this->session->start();
+        $this->authenticated = $this->isAuthenticated();
 
         // set defaults
         $this->config['contentSegment_WrapperPrefix'] = 'placeholder-';
@@ -139,6 +144,13 @@ class FeeditingPlugin extends \Herbie\Plugin
         }
     }
 
+    protected function isAuthenticated()
+    {
+        $ret = false;
+        if(!@$_REQUEST['action']=='logout') $ret = (bool) $_SESSION['_sf2_attributes']['LOGGED_IN'];
+        return $ret;
+    }
+
     // call document.ready-function in footer
     protected function onOutputGenerated(\Herbie\Event $event )
     {
@@ -169,8 +181,11 @@ class FeeditingPlugin extends \Herbie\Plugin
             return;
         }
 
-        list($path, $type) = explode('.', $tagOrPath);
-        switch($type){
+        $abspath = $this->alias->get('@plugin');
+        $dirname = strtr(dirname($tagOrPath), array($abspath => ''));
+        $filename = basename($tagOrPath);
+        $fileAtoms = explode('.',basename($filename));
+        switch(end($fileAtoms)){
             case 'css':
                 $tmpl = '<link rel="stylesheet" href="%s" type="text/css" media="screen" title="no title" charset="utf-8">';
                 break;
@@ -180,7 +195,7 @@ class FeeditingPlugin extends \Herbie\Plugin
             default:
                 return;
         }
-        $this->replace_pairs[$closingtag] = sprintf($tmpl, $tagOrPath).PHP_EOL.$this->replace_pairs[$closingtag];
+        $this->replace_pairs[$closingtag] = sprintf($tmpl, '/assets'.$dirname.DIRECTORY_SEPARATOR.$filename).PHP_EOL.$this->replace_pairs[$closingtag];
     }
 
     private function getReplacement($mark){
@@ -339,7 +354,11 @@ class FeeditingPlugin extends \Herbie\Plugin
     }
 
     public function includeAfterBodyStarts($tagOrPath){
-        $this->includeIntoTag('<body>', $tagOrPath);
+
+        $this->app['twig']->environment->setLoader(new Twig_Loader_String());
+        $twiggedBody = $this->app['twig']->environment->render('<body class="{{ bodyClass() }}">');
+
+        $this->includeIntoTag($twiggedBody, $tagOrPath);
     }
 
     public function includeBeforeBodyEnds($tagOrPath){
@@ -358,7 +377,7 @@ class FeeditingPlugin extends \Herbie\Plugin
 
     public function __call($funcname, $args)
     {
-        if($this->authenticated === true){
+        if($this->authenticated === true && 'adminpanel'!=$this->app->getRoute()){
             switch(count($args)){
                 case 5:
                     return $this->{$funcname}($args[0], $args[1], $args[2], $args[3], $args[4]);
