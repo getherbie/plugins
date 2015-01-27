@@ -1,0 +1,3 @@
+[submodule "feediting/libs/hallo"]
+	path = feediting/libs/hallo
+	url = https://github.com/bergie/hallo.git
