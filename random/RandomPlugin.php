@@ -19,7 +19,7 @@ class RandomPlugin extends Herbie\Plugin
     public function onPageLoaded(Herbie\Event $event)
     {
         $page = $event['page'];
-        if(!empty($page->random)) {
+        if (!empty($page->random)) {
             $excludeRoutes = empty($page->random['excludes']) ? [] : $page->random['excludes'];
             do {
                 $menuItem = $this->app['menu']->getRandom();
@@ -27,10 +27,9 @@ class RandomPlugin extends Herbie\Plugin
                     || ($menuItem->path == $page->path)
                     || in_array($menuItem->route, $excludeRoutes);
             } while ($invalid);
-            if(isset($menuItem)) {
+            if (isset($menuItem)) {
                 $page->load($menuItem->getPath());
             }
         }
     }
-
 }

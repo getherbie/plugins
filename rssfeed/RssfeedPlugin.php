@@ -35,5 +35,4 @@ class RssfeedPlugin extends Herbie\Plugin
             new Item($item)
         );
     }
-
 }

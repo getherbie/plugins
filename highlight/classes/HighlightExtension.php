@@ -9,7 +9,7 @@
  */
 
 namespace herbie\plugin\highlight\classes;
-    
+
 class HighlightExtension extends \Twig_Extension
 {
 
@@ -30,5 +30,4 @@ class HighlightExtension extends \Twig_Extension
             new HighlightTokenParser()
         ];
     }
-
 }

@@ -61,5 +61,4 @@ class YoutubePlugin extends Herbie\Plugin
             'instances' => self::$instances
         ]);
     }
-
 }

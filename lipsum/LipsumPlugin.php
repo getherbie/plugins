@@ -67,5 +67,4 @@ class LipsumPlugin extends Herbie\Plugin
         $helper->shuffle();
         return $helper->display('sentences', 10) . '.';
     }
-
 }

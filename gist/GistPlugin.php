@@ -36,5 +36,4 @@ class GistPlugin extends Herbie\Plugin
     {
         return "<script src=\"http://gist.github.com/{$id}.js" . ($file == '' ? '' : '?file=' . $file) . "\"></script>";
     }
-
 }

@@ -20,5 +20,4 @@ class WidgetsPlugin extends \Herbie\Plugin
     {
         $event['twig']->addExtension(new WidgetsExtension($event['app']));
     }
-
 }

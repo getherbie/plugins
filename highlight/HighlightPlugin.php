@@ -20,5 +20,4 @@ class HighlightPlugin extends \Herbie\Plugin
     {
         $event['twig']->addExtension(new HighlightExtension());
     }
-
 }

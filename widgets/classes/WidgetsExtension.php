@@ -55,7 +55,9 @@ class WidgetsExtension extends \Twig_Extension
      */
     public function __construct($app)
     {
-        if(!defined('DS')) define('DS', DIRECTORY_SEPARATOR);
+        if (!defined('DS')) {
+            define('DS', DIRECTORY_SEPARATOR);
+        }
 
         $this->app = $app;
         $this->basePath = $app['request']->getBasePath() . DS;
@@ -96,21 +98,24 @@ class WidgetsExtension extends \Twig_Extension
         return sprintf('<div class="widget-%s">%s</div>', $path, $content);
     }
 
-    public function renderWidget($widgetName) {
+    public function renderWidget($widgetName)
+    {
 
         # Enable configuration of hidden custom-template-containers in the pagetree
         $_subtemplateDir = false;
         $_curDir = dirname($this->app['page']->path);
         $_widgetDir = '_'.strtolower($widgetName);
 
-        if(is_dir($_curDir.DS.$_widgetDir)) {
+        if (is_dir($_curDir.DS.$_widgetDir)) {
             $_subtemplateDir = $_curDir.DS.$_widgetDir.DS.'.layouts';
-            if(!is_dir($_subtemplateDir)){
+            if (!is_dir($_subtemplateDir)) {
                 $_subtemplateDir = false;
             }
         }
 
-        if(!$_subtemplateDir) return null;
+        if (!$_subtemplateDir) {
+            return null;
+        }
 
         $subpageLoader = new Loader\PageLoader($this->app['parser']);
         $subpage = $this->app['page'] = $subpageLoader->load(dirname($_subtemplateDir).DS.'index.md');
@@ -134,5 +139,4 @@ class WidgetsExtension extends \Twig_Extension
         ]);
         return $ret;
     }
-
 }

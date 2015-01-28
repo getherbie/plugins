@@ -14,24 +14,25 @@ class LoremIpsum
         "Pellentesque mi mi, pretium in scelerisque nec, facilisis id massa. Cras feugiat dui id dui volutpat malesuada posuere eros faucibus. Vestibulum mattis suscipit aliquam. Phasellus aliquet cursus ipsum sed cursus. Ut molestie laoreet elementum. Etiam varius orci sit amet nibh luctus tincidunt quis sed nisi. Maecenas leo nisi, ornare id fermentum sit amet, ornare at sapien. Duis pellentesque, felis vitae euismod sagittis, leo lorem vestibulum neque, in gravida urna orci vel dui. Nam ligula justo, consequat at pharetra eget, auctor in sem. In placerat quam nec felis sollicitudin vitae malesuada metus eleifend. Vivamus commodo ipsum mollis risus sodales malesuada. Duis et imperdiet elit. Proin sapien lorem, fermentum vel lacinia vitae, bibendum in erat. Etiam tristique, velit non mollis blandit, turpis eros rhoncus mi, iaculis tristique est velit at lectus. Morbi commodo felis sed ligula pellentesque sed dignissim nulla eleifend."
     );
 
-    function display($unit, $amount, $print = true) {
+    public function display($unit, $amount, $print = true)
+    {
         $lorem = implode('|', $this->text);
-        if($unit == 'characters') {
+        if ($unit == 'characters') {
             $text = substr($lorem, 0, $amount);
-            if( $text[strlen($text)-1] != '.' && $text[strlen($text)-1] != ' ' ) {
+            if ($text[strlen($text)-1] != '.' && $text[strlen($text)-1] != ' ') {
                 $text .= '.';
             }
         } else {
-            if($unit == 'words') {
+            if ($unit == 'words') {
                 $splitBy = ' ';
-            } elseif($unit == 'sentences') {
+            } elseif ($unit == 'sentences') {
                 $splitBy = '.';
             } else {
                 $splitBy = '|';
             }
             $pieces = explode($splitBy, $lorem);
             $count = sizeof($pieces);
-            while( $amount > $count ) {
+            while ($amount > $count) {
                 $morePieces = explode($splitBy, $lorem);
                 $pieces = array_merge($pieces, $morePieces);
                 $count = sizeof($pieces);
@@ -41,7 +42,7 @@ class LoremIpsum
         }
         $text = str_replace('|', "\n\n", $text);
         #$text = trim("<p>$text</p>");
-        if( $print ) {
+        if ($print) {
             echo $text;
         } else {
             return $text;
@@ -52,4 +53,4 @@ class LoremIpsum
     {
         shuffle($this->text);
     }
-} 
+}

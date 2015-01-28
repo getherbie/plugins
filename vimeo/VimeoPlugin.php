@@ -58,5 +58,4 @@ class VimeoPlugin extends Herbie\Plugin
             'instances' => self::$instances
         ]);
     }
-
 }

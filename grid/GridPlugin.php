@@ -31,7 +31,7 @@ class GridPlugin extends Herbie\Plugin
             [$this, 'replace'],
             $event['segment']
         );
-        if(!is_null($replaced)) {
+        if (!is_null($replaced)) {
             $event['segment'] = $replaced;
         }
     }
@@ -42,7 +42,7 @@ class GridPlugin extends Herbie\Plugin
      */
     private function replace($matches)
     {
-        if(empty($matches) || (count($matches) <> 3)) {
+        if (empty($matches) || (count($matches) <> 3)) {
             return null;
         }
 
@@ -50,7 +50,7 @@ class GridPlugin extends Herbie\Plugin
         $content = $matches[2];
 
         // no template defined
-        if(!array_key_exists($key, $this->templates)) {
+        if (!array_key_exists($key, $this->templates)) {
             // return content as it is
             return $content;
         }
@@ -62,8 +62,8 @@ class GridPlugin extends Herbie\Plugin
         $html = '';
 
         // replace cols
-        foreach($cols as $i => $col) {
-            if(isset($template['cols'][$i])) {
+        foreach ($cols as $i => $col) {
+            if (isset($template['cols'][$i])) {
                 $html .= str_replace(['{col}', '{index}'], [$col, $i+1], $template['cols'][$i]);
             } else {
                 $html .= $col;
@@ -71,12 +71,11 @@ class GridPlugin extends Herbie\Plugin
         }
 
         // replace row
-        if(array_key_exists('row', $template)) {
+        if (array_key_exists('row', $template)) {
             return str_replace('{row}', $html, $template['row']);
         }
 
         // give it back
         return $html;
     }
-
 }

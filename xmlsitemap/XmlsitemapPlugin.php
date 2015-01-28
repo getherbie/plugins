@@ -35,5 +35,4 @@ class XmlsitemapPlugin extends Herbie\Plugin
             new Item($item)
         );
     }
-
 }
