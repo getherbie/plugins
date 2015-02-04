@@ -7,6 +7,7 @@ git subsplit update
 git subsplit publish "
     adminpanel/:https://github.com/getherbie/plugin-adminpanel.git
     disqus/:https://github.com/getherbie/plugin-disqus.git
+    feed/:https://github.com/getherbie/plugin-feed.git
     form/:https://github.com/getherbie/plugin-form.git
     gist/:https://github.com/getherbie/plugin-gist.git
     grid/:https://github.com/getherbie/plugin-grid.git
@@ -15,7 +16,6 @@ git subsplit publish "
     imagine/:https://github.com/getherbie/plugin-imagine.git
     lipsum/:https://github.com/getherbie/plugin-lipsum.git
     random/:https://github.com/getherbie/plugin-random.git
-    rssfeed/:https://github.com/getherbie/plugin-rssfeed.git
     shortcode/:https://github.com/getherbie/plugin-shortcode.git
     simplecontact/:https://github.com/getherbie/plugin-simplecontact.git
     simplesearch/:https://github.com/getherbie/plugin-simplesearch.git

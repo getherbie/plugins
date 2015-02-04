@@ -1,8 +1,8 @@
 {
-    "name": "getherbie/plugin-rssfeed",
+    "name": "getherbie/plugin-feed",
     "homepage": "http://www.getherbie.org",
-    "description": "Herbie Plugin RSS-Feed",
-    "keywords": ["herbie", "plugin", "rss", "feed"],
+    "description": "Herbie Plugin Feed (RSS/Atom)",
+    "keywords": ["herbie", "plugin", "rss", "atom", "feed"],
     "type": "herbie-plugin",
     "license": "BSD-3-Clause",
     "require": {

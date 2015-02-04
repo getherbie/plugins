@@ -15,6 +15,7 @@ Aktuell stehen folgende Plugins zur Verfügung:
 
 * [Adminpanel](adminpanel)
 * [Disqus](disqus)
+* [Feed](feed)
 * [Gist](gist)
 * [Grid](grid)
 * [Google Maps](googlemaps)
@@ -22,7 +23,6 @@ Aktuell stehen folgende Plugins zur Verfügung:
 * [Imagine](imagine)
 * [Lipsum](lipsum)
 * [Random](random)
-* [RSS-Feed](rssfeed)
 * [Shortcode](shortcode)
 * [Simple Contact](simplecontact)
 * [Simple Search](simplesearch)

@@ -9,30 +9,40 @@
  * file that was distributed with this source code.
  */
 
-namespace herbie\plugin\rssfeed;
+namespace herbie\plugin\feed;
 
 use Herbie;
 use Herbie\Loader\FrontMatterLoader;
 use Herbie\Menu\Page\Item;
 
-class RssfeedPlugin extends Herbie\Plugin
+class FeedPlugin extends Herbie\Plugin
 {
+
+    /**
+     * @var Herbie\Menu\Page
+     */
+    private $menu;
 
     /**
      * @param Herbie\Event $event
      */
     public function onPluginsInitialized(Herbie\Event $event)
     {
-        $alias = $this->config(
-            'plugins.config.rssfeed.pages.feed',
-            '@plugin/rssfeed/pages/feed.rss'
-        );
+        $this->menu = $event['app']['menu'];
+        $this->addPage($this->config('plugins.config.feed.pages.rss', '@plugin/feed/pages/feed.rss'));
+        $this->addPage($this->config('plugins.config.feed.pages.atom', '@plugin/feed/pages/feed.atom'));
+    }
+
+    /**
+     * @param $alias
+     */
+    private function addPage($alias)
+    {
         $path = $this->app['alias']->get($alias);
         $loader = new FrontMatterLoader();
         $item = $loader->load($path);
         $item['path'] = $alias;
-        $event['app']['menu']->addItem(
-            new Item($item)
-        );
+        $this->menu->addItem(new Item($item));
     }
+
 }
