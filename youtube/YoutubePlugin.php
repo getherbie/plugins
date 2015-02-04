@@ -32,9 +32,6 @@ class YoutubePlugin extends Herbie\Plugin
         $this->twig->addFunction(
             new Twig_SimpleFunction('youtube', [$this, 'youtube'], ['is_safe' => ['html']])
         );
-        $this->twig->addFunction(
-            new Twig_SimpleFunction('youTube', [$this, 'youtube'], ['is_safe' => ['html']])
-        );
     }
 
     /**
