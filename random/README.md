@@ -21,7 +21,7 @@ mehrere Seiten ausschliessen, indem du die Route(n) angibst.
         
     ---
     title: Zufall
-    noCache: 1
+    nocache: 1
     random:
         excludes: [blog,kontakt]
     ---

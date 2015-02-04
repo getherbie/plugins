@@ -1,8 +1,8 @@
 ---
 route: feed.rss
 layout: null
-contentType: text/xml
-preserveExtension: true
+ctype: text/xml
+keep_extension: true
 hidden: true
 plugin: rssfeed
 ---
