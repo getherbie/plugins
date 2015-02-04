@@ -1,7 +1,7 @@
 ---
 route: sitemap.xml
 layout: null
-ctype: text/xml
+content_type: text/xml
 keep_extension: true
 hidden: true
 plugin: xmlsitemap
