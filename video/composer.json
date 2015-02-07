@@ -1,0 +1,11 @@
+{
+    "name": "getherbie/plugin-video",
+    "homepage": "http://www.getherbie.org",
+    "description": "Herbie Video Plugin",
+    "keywords": ["herbie", "plugin", "video", "vimeo", "youtube"],
+    "type": "herbie-plugin",
+    "license": "BSD-3-Clause",
+    "require": {
+        "getherbie/herbie": "dev-master"
+    }
+}
