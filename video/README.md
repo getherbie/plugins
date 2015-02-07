@@ -29,7 +29,7 @@ Nach der Installation stehen dir die Twig-Funktion `video_youtube` und `video_vi
 
 Alternativ kannst du die Funktion auch mit benannten Argumenten aufrufen.
 
-    {{ video_youtube(id="", width="480", height="320", responsive="1") }}
+    {{ video_youtube(id="_0TfPpjDkWU", width="480", height="320", responsive="1") }}
     {{ video_vimeo(id="30459532", width=480, height=320, responsive=1) }}
 
 
