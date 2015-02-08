@@ -1,15 +1,14 @@
 # Herbie SimpleContact Plugin
 
-`SimpleContact` ist ein [Herbie](http://github.com/getherbie/herbie) Plugin, mit dem du deine Website mit einem 
-einfachen Kontaktformular mit den Feldern Name, E-Mail und Nachricht ausstattest.
+`SimpleContact` is a [Herbie](http://github.com/getherbie/herbie) plugin to get your website with a simple contact form with the fields Name, email and message.
 
 ## Installation
 
-Das Plugin installierst du via Composer.
+The plugin you install via Composer.
 
 	$ composer require getherbie/plugin-simplecontact
 
-Danach aktivierst du das Plugin in der Konfigurationsdatei.
+Then you activate the plugin in the configuration file.
 
     plugins:
         enable:
