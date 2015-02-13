@@ -1,15 +1,14 @@
 # Herbie SimpleSearch Plugin
 
-`SimpleSearch` ist ein [Herbie](http://github.com/getherbie/herbie) Plugin, mit dem du deine Website mit einer einfachen
-aber leistungsvollen Suche ausstattest.
+`SimpleSearch` is a [Herbie](http://github.com/getherbie/herbie) plugin to get your website with a simple but power full search.
 
 ## Installation
 
-Das Plugin installierst du via Composer.
+The plugin you install via Composer.
 
 	$ composer require getherbie/plugin-simplesearch
 
-Danach aktivierst du das Plugin in der Konfigurationsdatei.
+Then you activate the plugin in the configuration file.
 
     plugins:
         enable:
