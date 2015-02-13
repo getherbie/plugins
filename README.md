@@ -27,7 +27,6 @@ Aktuell stehen folgende Plugins zur Verfügung:
 * [Simple Contact](simplecontact)
 * [Simple Search](simplesearch)
 * [Test](test)
-* [Vimeo](vimeo)
+* [Video](video)
 * [XML-Sitemap](xmlsitemap)
-* [YouTube](youtube)
 
