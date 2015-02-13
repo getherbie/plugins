@@ -25,7 +25,5 @@ the process of managing one-way read-only subtree splits.
         simplesearch:https://github.com/getherbie/plugin-simplesearch.git
         test:https://github.com/getherbie/plugin-test.git
         video:https://github.com/getherbie/plugin-video.git
-        vimeo:https://github.com/getherbie/plugin-vimeo.git
-        youtube:https://github.com/getherbie/plugin-youtube.git
         xmlsitemap:https://github.com/getherbie/plugin-xmlsitemap.git
     " --heads=master
