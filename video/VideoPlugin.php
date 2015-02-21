@@ -53,7 +53,7 @@ class VideoPlugin extends Herbie\Plugin
     public function vimeo($id, $width = 480, $height = 320, $responsive = 1)
     {
         self::$vimeoInstances++;
-        $template = $this->app['config']->get(
+        $template = $this->config->get(
             'plugins.config.video.template.vimeo',
             '@plugin/video/templates/vimeo.twig'
         );
@@ -78,7 +78,7 @@ class VideoPlugin extends Herbie\Plugin
     public function youtube($id, $width = 480, $height = 320, $responsive = 1)
     {
         self::$youtubeInstances++;
-        $template = $this->app['config']->get(
+        $template = $this->config->get(
             'plugins.config.video.template.youtube',
             '@plugin/video/templates/youtube.twig'
         );

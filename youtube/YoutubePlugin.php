@@ -45,7 +45,7 @@ class YoutubePlugin extends Herbie\Plugin
     public function youtube($id, $width = 480, $height = 320, $responsive = 1)
     {
         self::$instances++;
-        $template = $this->app['config']->get(
+        $template = $this->config->get(
             'plugins.config.youtube.template',
             '@plugin/youtube/templates/youtube.twig'
         );

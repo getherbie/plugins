@@ -50,7 +50,7 @@ class GooglemapsPlugin extends Herbie\Plugin
     public function googleMaps($id = 'gmap', $width = 600, $height = 450, $type = 'roadmap', $class = 'gmap', $zoom = 15, $address = '')
     {
         self::$instances++;
-        $template = $this->app['config']->get(
+        $template = $this->config->get(
             'plugins.config.googlemaps.template',
             '@plugin/googlemaps/templates/googlemaps.twig'
         );

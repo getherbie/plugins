@@ -127,7 +127,7 @@ class WidgetsExtension extends \Twig_Extension
         ]);
 
         $twiggedWidget->addExtension(new Twig\HerbieExtension($this->app));
-        if (!$this->app['config']->isEmpty('imagine')) {
+        if (!$this->config->isEmpty('imagine')) {
             #$twiggedWidget->addExtension(new Twig\ImagineExtension($this->app));
         }
 //        $twiggedWidget->addTwigPlugins();
