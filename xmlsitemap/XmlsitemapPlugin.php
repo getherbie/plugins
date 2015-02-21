@@ -23,16 +23,8 @@ class XmlsitemapPlugin extends Herbie\Plugin
      */
     public function onPluginsInitialized(Herbie\Event $event)
     {
-        $alias = $this->config(
-            'plugins.config.xmlsitemap.pages.sitemap',
-            '@plugin/xmlsitemap/pages/sitemap.xml'
-        );
-        $path = $this->app['alias']->get($alias);
-        $loader = new FrontMatterLoader();
-        $item = $loader->load($path);
-        $item['path'] = $alias;
-        $event['app']['menu']->addItem(
-            new Item($item)
-        );
+        if($this->app['config']->isEmpty('plugins.config.xmlsitemap.no_page')) {
+            $this->app['config']->push('pages.extra_paths', '@plugin/xmlsitemap/pages');
+        }
     }
 }

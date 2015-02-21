@@ -1,5 +1,4 @@
 ---
-route: feed.rss
 layout: null
 content_type: text/xml
 keep_extension: true

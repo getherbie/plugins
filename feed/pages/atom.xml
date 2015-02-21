@@ -1,5 +1,4 @@
 ---
-route: feed.atom
 layout: null
 content_type: text/xml
 keep_extension: true

@@ -28,21 +28,9 @@ class FeedPlugin extends Herbie\Plugin
      */
     public function onPluginsInitialized(Herbie\Event $event)
     {
-        $this->menu = $event['app']['menu'];
-        $this->addPage($this->config('plugins.config.feed.pages.rss', '@plugin/feed/pages/feed.rss'));
-        $this->addPage($this->config('plugins.config.feed.pages.atom', '@plugin/feed/pages/feed.atom'));
-    }
-
-    /**
-     * @param $alias
-     */
-    private function addPage($alias)
-    {
-        $path = $this->app['alias']->get($alias);
-        $loader = new FrontMatterLoader();
-        $item = $loader->load($path);
-        $item['path'] = $alias;
-        $this->menu->addItem(new Item($item));
+        if($this->app['config']->isEmpty('plugins.config.feed.no_page')) {
+            $this->app['config']->push('pages.extra_paths', '@plugin/feed/pages');
+        }
     }
 
 }
