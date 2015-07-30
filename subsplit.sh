@@ -16,6 +16,7 @@ git subsplit publish "
     imagine:https://github.com/getherbie/plugin-imagine.git
     lipsum:https://github.com/getherbie/plugin-lipsum.git
     random:https://github.com/getherbie/plugin-random.git
+    redirect:https://github.com/getherbie/plugin-redirect.git
     shortcode:https://github.com/getherbie/plugin-shortcode.git
     simplecontact:https://github.com/getherbie/plugin-simplecontact.git
     simplesearch:https://github.com/getherbie/plugin-simplesearch.git

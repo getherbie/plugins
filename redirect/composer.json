@@ -1,0 +1,11 @@
+{
+    "name": "getherbie/plugin-redirect",
+    "homepage": "http://www.getherbie.org",
+    "description": "Redirect Plugin for Herbie.",
+    "keywords": ["herbie", "plugin", "redirect"],
+    "type": "herbie-plugin",
+    "license": "BSD-3-Clause",
+    "require": {
+        "getherbie/herbie": "dev-master"
+    }
+}
