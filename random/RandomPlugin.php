@@ -22,7 +22,7 @@ class RandomPlugin extends Herbie\Plugin
         if (!empty($page->random)) {
             $excludeRoutes = empty($page->random['excludes']) ? [] : $page->random['excludes'];
             do {
-                $menuItem = $this->app['menu']->getRandom();
+                $menuItem = $this->getService('Menu\Page\Collection')->getRandom();
                 $invalid = ($menuItem->hidden == true)
                     || ($menuItem->path == $page->path)
                     || in_array($menuItem->route, $excludeRoutes);

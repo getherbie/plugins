@@ -58,7 +58,7 @@ class YcePlugin extends Herbie\Plugin
             }
             #echo"<pre>";print_r($params);echo"</pre>";
             $template = $this->getTemplateByKey($key);
-            $twigged = $this->app['twig']->render($template, $params);
+            $twigged = $this->render($template, $params);
             return $twigged;
         } catch (\Exception $e) {
             $message = $e->getMessage();
@@ -101,7 +101,7 @@ class YcePlugin extends Herbie\Plugin
             'plugins.config.yce.template.imgtext',
             '@plugin/yce/templates/imgtext.twig'
         );
-        return $this->app['twig']->render($template, [
+        return $this->render($template, [
             'text' => $text,
             'img' => $img,
         ]);
