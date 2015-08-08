@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-test",
-    "homepage": "http://www.getherbie.org",
-    "description": "Test Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "test"],        
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

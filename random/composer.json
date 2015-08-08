@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-random",
-    "homepage": "http://www.getherbie.org",
-    "description": "Random Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "random"],
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

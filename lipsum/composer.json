@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-lipsum",
-    "homepage": "http://www.getherbie.org",
-    "description": "Lipsum Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "lipsum"],        
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

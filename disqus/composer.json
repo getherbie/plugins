@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-disqus",
-    "homepage": "http://www.getherbie.org",
-    "description": "Disqus Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "disqus"],
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

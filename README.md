@@ -1,32 +1,24 @@
 Herbie Plugins
 ==============
 
-Dies ist das offizielle Verzeichnis für Herbie Plugins.
+Dies ist ein reines Metapackage, welches die folgenden Plugins aggregiert:
 
-Für Herbie stehen schon einige Plugins zur Verfügung. Ein Plugin installierst du via Composer.
+* [Adminpanel](https://github.com/getherbie/plugin-adminpanel)
+* [Disqus](https://github.com/getherbie/plugin-disqus)
+* [Feed](https://github.com/getherbie/plugin-feed)
+* [Gist](https://github.com/getherbie/plugin-gist)
+* [Google Maps](https://github.com/getherbie/plugin-googlemaps)
+* [Grid](https://github.com/getherbie/plugin-grid)
+* [Highlight](https://github.com/getherbie/plugin-highlight)
+* [Imagine](https://github.com/getherbie/plugin-imagine)
+* [Lipsum](https://github.com/getherbie/plugin-lipsum)
+* [Random](https://github.com/getherbie/plugin-random)
+* [Redirect](https://github.com/getherbie/plugin-redirect)
+* [Shortcode](https://github.com/getherbie/plugin-shortcode)
+* [Simple Contact](https://github.com/getherbie/plugin-simplecontact)
+* [Simple Search](https://github.com/getherbie/plugin-simplesearch)
+* [Test](https://github.com/getherbie/plugin-test)
+* [Video](https://github.com/getherbie/plugin-video)
+* [XML-Sitemap](https://github.com/getherbie/plugin-xmlsitemap)
 
-    $ composer require getherbie/plugin-disqus
-    
-Danach aktivierst du das Plugin in der Konfigurationsdatei und passt Plugin-Einstellungen an.
-
-Fertig!
-
-Aktuell stehen folgende Plugins zur Verfügung:
-
-* [Adminpanel](adminpanel)
-* [Disqus](disqus)
-* [Feed](feed)
-* [Gist](gist)
-* [Grid](grid)
-* [Google Maps](googlemaps)
-* [Highlight](highlight)
-* [Imagine](imagine)
-* [Lipsum](lipsum)
-* [Random](random)
-* [Shortcode](shortcode)
-* [Simple Contact](simplecontact)
-* [Simple Search](simplesearch)
-* [Test](test)
-* [Video](video)
-* [XML-Sitemap](xmlsitemap)
-
+Mehr Informationen findest du in den einzelnen Packages.

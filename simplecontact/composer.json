@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-simplecontact",
-    "homepage": "http://www.getherbie.org",
-    "description": "SimpleContact Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "contact", "mailform"],
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

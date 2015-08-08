@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-gist",
-    "homepage": "http://www.getherbie.org",
-    "description": "Gist Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "gist"],
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

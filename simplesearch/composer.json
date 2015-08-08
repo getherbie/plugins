@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-simplesearch",
-    "homepage": "http://www.getherbie.org",
-    "description": "SimpleSearch Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "search", "simplesearch"],
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

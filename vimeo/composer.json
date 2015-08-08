@@ -1,8 +1,0 @@
-{
-    "name": "getherbie/plugin-vimeo",
-    "homepage": "http://www.getherbie.org",
-    "description": "Vimeo Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "vimeo"],        
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}

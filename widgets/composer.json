@@ -1,8 +1,0 @@
-{
-    "name": "nzwbr/herbie-widgets",
-    "homepage": "http://www.netzweberei.de",
-    "description": "Widgets Plugin for Herbie.",
-    "keywords": ["herbie", "plugin", "widgets"],
-    "type": "herbie-plugin",
-    "license": "BSD-3-Clause"
-}
